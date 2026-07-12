@@ -1,0 +1,112 @@
+/* ============================================================
+   QUESTLINE — static export stylesheet
+   Pages: login.html · register.html · home.html · map.html
+   ============================================================ */
+
+:root {
+  --ink: #3a2c15;
+  --ink-dark: #241a08;
+  --black: #14100a;
+  --parchment: #ede0c0;
+  --card: #f6edd6;
+  --card-2: #efe3c6;
+  --paper: #fffbf0;
+  --gold: #c9962e;
+  --gold-bright: #e9b94e;
+  --gold-deep: #a87a1e;
+  --gold-dim: #8a6a1e;
+  --green: #4e7c43;
+  --green-2: #5c9150;
+  --muted: #8a7a55;
+  --muted-2: #6b5a38;
+  --sand: #9c8b62;
+  --line: #e0d0a8;
+  --dark: #2a2010;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Alegreya", Georgia, serif;
+  color: var(--ink);
+  background:
+    radial-gradient(
+      1200px 600px at 50% -10%,
+      rgba(201, 150, 46, 0.14),
+      transparent 60%
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgba(58, 44, 21, 0.02) 0 1px,
+      transparent 1px 3px
+    ),
+    var(--parchment);
+}
+
+.pix {
+  font-family: "Pixelify Sans", sans-serif;
+}
+
+a {
+  color: var(--gold-deep);
+}
+a:hover {
+  color: var(--gold);
+}
+
+input,
+textarea,
+button {
+  font-family: inherit;
+}
+input:focus,
+textarea:focus {
+  outline: 2px solid var(--gold);
+  outline-offset: 1px;
+}
+::selection {
+  background: var(--gold);
+  color: var(--ink-dark);
+}
+
+@keyframes glowPulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(201, 150, 46, 0.55),
+      4px 4px 0 var(--ink);
+  }
+  50% {
+    box-shadow:
+      0 0 0 12px rgba(201, 150, 46, 0),
+      4px 4px 0 var(--ink);
+  }
+}
+@keyframes floaty {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+@keyframes drawerIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
