@@ -1,0 +1,189 @@
+/* ============ HOME ============ */
+
+.page {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 44px 28px 90px;
+}
+.hero-title {
+  margin: 0;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 34px;
+  font-weight: 400;
+  letter-spacing: 2px;
+  color: var(--ink);
+  text-shadow: 2px 2px 0 rgba(201, 150, 46, 0.3);
+}
+.hero-sub {
+  margin: 6px 0 34px;
+  font-size: 17px;
+  font-style: italic;
+  color: var(--muted);
+}
+.section-title {
+  margin: 0 0 16px;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  letter-spacing: 2px;
+  color: var(--ink);
+}
+
+.ql-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+.ql-card {
+  background: var(--card);
+  border: 3px solid var(--ink);
+  box-shadow: 5px 5px 0 rgba(58, 44, 21, 0.35);
+  padding: 22px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.ql-card-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ql-tag {
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--gold-dim);
+}
+.badge {
+  margin-left: auto;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 11px;
+  letter-spacing: 1px;
+  padding: 3px 9px;
+  border: 2px solid var(--ink);
+}
+.badge-progress {
+  background: var(--gold);
+  color: var(--ink-dark);
+}
+.badge-done {
+  background: var(--green);
+  color: #f0e2bc;
+}
+.badge-idle {
+  background: #ddd2b4;
+  color: var(--muted-2);
+}
+.badge-sealed {
+  background: #cfc4a6;
+  color: var(--muted-2);
+}
+
+.ql-title {
+  margin: 0;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: 1px;
+  color: var(--ink-dark);
+  line-height: 1.15;
+}
+.ql-desc {
+  margin: 0;
+  font-size: 15px;
+  color: var(--muted-2);
+  line-height: 1.5;
+  text-wrap: pretty;
+  flex: 1;
+}
+.mini-bar-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+.mini-bar-labels span {
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--gold-dim);
+}
+.mini-bar-track {
+  height: 16px;
+  background: #e7d8b4;
+  border: 3px solid var(--ink);
+}
+
+.ql-cta {
+  margin-top: 4px;
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 14px;
+  letter-spacing: 2px;
+  border: 3px solid var(--black);
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.3);
+  padding: 11px;
+  cursor: pointer;
+}
+.ql-cta:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.35);
+}
+.ql-cta:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.3);
+}
+.cta-gold {
+  background: var(--gold);
+  color: var(--ink-dark);
+}
+.cta-gold:hover {
+  color: var(--ink-dark);
+}
+.cta-quiet {
+  background: var(--card-2);
+  color: var(--ink);
+}
+.cta-quiet:hover {
+  color: var(--ink);
+}
+.cta-dark {
+  background: var(--ink);
+  color: #f0e2bc;
+}
+.cta-dark:hover {
+  color: #f0e2bc;
+}
+
+.ql-new {
+  border: 3px dashed var(--muted);
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--muted);
+  padding: 22px;
+  text-decoration: none;
+  text-align: center;
+}
+.ql-new:hover {
+  border-color: var(--gold);
+  color: var(--gold-deep);
+  background: rgba(201, 150, 46, 0.06);
+}
+.ql-new .plus {
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 34px;
+}
+.ql-new .label {
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 14px;
+  letter-spacing: 2px;
+}
+.ql-new .hint {
+  font-size: 14px;
+  font-style: italic;
+}

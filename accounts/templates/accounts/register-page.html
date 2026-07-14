@@ -1,16 +1,44 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Register</title>
-  </head>
-  <body>
-        <form method="POST">
-            {%csrf_token%}
-            {{form.as_p}}
-            <button>Register</button>
+{% extends 'common/base.html' %}
+{% load static %}
+{% load custom_filters %}
+{% block topbar %}{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'accounts/css/gate.css' %}">
+{% endblock %}
+{% block content %}
+  <div class="gate">
+    <div class="gate-box">
+      <header class="gate-brand">
+        <div class="logo-diamond">◆</div>
+        <h1 class="gate-title">QUESTLINE</h1>
+        <p class="gate-tagline">a new name is entered in the guild ledger.</p>
+      </header>
+      <section class="gate-card">
+        <h2 class="card-heading">✦ CREATE YOUR ADVENTURER</h2>
+        <form class="stack" method="POST">
+          {% csrf_token %}
+          <div class="field">
+            <label for="id_username">ADVENTURER NAME</label>
+            {{ form.username|placeholder:'e.g. Rowan the Taskcrusher' }}
+          </div>
+          <div class="field">
+            <label for="id_email">SCROLL OF IDENTITY (EMAIL)</label>
+            {{ form.email|placeholder:'adventurer@realm.com' }}
+          </div>
+          <div class="field">
+            <label for="id_password1">SECRET RUNE (PASSWORD)</label>
+            {{ form.password1|placeholder:'At least 8 glyphs' }}
+          </div>
+          <div class="field">
+            <label for="id_password2">SECRET SECRET RUNE (REPEAT PASSWORD)</label>
+            {{ form.password2|placeholder:'At least 8 glyphs' }}
+          </div>
+          <button class="btn btn-primary" type="submit">⚔ BEGIN YOUR LEGEND</button>
         </form>
-  </body>
-</html>
+        <footer class="card-foot">
+          Already sworn in? <a class="pixel-link" href="{% url 'login' %}">RETURN TO THE GATES →</a>
+        </footer>
+      </section>
+    </div>
+  </div>
+{% endblock %}

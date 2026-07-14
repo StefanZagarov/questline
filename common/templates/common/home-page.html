@@ -1,0 +1,79 @@
+{% extends 'common/base.html' %}
+{% load static %}
+{% block extra_js %}
+  <script src="{% static 'common/js/script.js'%}" defer></script>
+{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'common/css/home.css' %}">
+{% endblock %}
+{% block content %}
+  <div class="page">
+    <h1 class="hero-title">WELCOME BACK, ADVENTURER</h1>
+    <p class="hero-sub">the maps await. pick up where you left off.</p>
+    <h2 class="section-title">✦ YOUR QUESTLINES</h2>
+    <div class="ql-grid">
+      <article class="ql-card">
+        <div class="ql-card-top">
+          <div class="ql-tag">CAREER PATH</div>
+          <div class="badge badge-progress">⚑ IN PROGRESS</div>
+        </div>
+        <h3 class="ql-title">BACKEND DEVELOPER</h3>
+        <p class="ql-desc">
+          From “what is DNS” to shipping containers to production. Six quests and one optional detour through the terminal.
+        </p>
+        <div>
+          <div class="mini-bar-labels">
+            <span data-home-count>1 / 6 QUESTS</span><span data-home-pct>17%</span>
+          </div>
+          <div class="mini-bar-track">
+            <div class="bar-fill" data-home-bar style="width: 17%;"></div>
+          </div>
+        </div>
+        <a class="ql-cta cta-gold" href="map.html">▶ CONTINUE THE QUEST</a>
+      </article>
+      <article class="ql-card">
+        <div class="ql-card-top">
+          <div class="ql-tag">SKILL TREE</div>
+          <div class="badge badge-done">★ CONQUERED</div>
+        </div>
+        <h3 class="ql-title">SQL MASTERY</h3>
+        <p class="ql-desc">
+          Joins, window functions, indexes, and reading query plans without flinching. Conquered last spring.
+        </p>
+        <div>
+          <div class="mini-bar-labels">
+            <span>5 / 5 QUESTS</span><span>100%</span>
+          </div>
+          <div class="mini-bar-track">
+            <div class="bar-fill" style="width: 100%;"></div>
+          </div>
+        </div>
+        <a class="ql-cta cta-quiet" href="#">↺ REVISIT THE MAP</a>
+      </article>
+      <article class="ql-card">
+        <div class="ql-card-top">
+          <div class="ql-tag">CAREER PATH</div>
+          <div class="badge badge-idle">◇ NOT STARTED</div>
+        </div>
+        <h3 class="ql-title">FRONTEND DEVELOPER</h3>
+        <p class="ql-desc">
+          HTML, CSS, JavaScript, and a framework of your choosing. The map is drawn; the first step untaken.
+        </p>
+        <div>
+          <div class="mini-bar-labels">
+            <span>0 / 8 QUESTS</span><span>0%</span>
+          </div>
+          <div class="mini-bar-track">
+            <div class="bar-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+        <a class="ql-cta cta-dark" href="#">⚐ SET FORTH</a>
+      </article>
+      <a class="ql-new" href="#">
+        <div class="plus">+</div>
+        <div class="label">CHART A NEW MAP</div>
+        <div class="hint">turn any goal into a questline</div>
+      </a>
+    </div>
+  </div>
+{% endblock %}

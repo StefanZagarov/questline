@@ -1,0 +1,32 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Questline — Guild hall</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&family=Alegreya:ital,wght@0,400..800;1,400..700&display=swap"
+          rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'common/css/base.css' %}">
+    {% block extra_css %}{% endblock %}
+    {% block extra_js %}{% endblock %}
+  </head>
+  <body>
+    {% block topbar %}
+      <header class="topbar">
+        <div class="topbar-inner">
+          <div class="logo-sm">◆</div>
+          <div class="wordmark">QUESTLINE</div>
+          <div class="spacer"></div>
+          <div class="lv-badge" data-lv>LV 3</div>
+          <a class="leave-btn" href="{% url 'login' %}">LEAVE ⇥</a>
+        </div>
+      </header>
+    {% endblock %}
+    <main>
+      {% block content %}{% endblock %}
+    </main>
+  </body>
+</html>
