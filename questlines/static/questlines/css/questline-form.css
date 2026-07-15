@@ -1,0 +1,346 @@
+/* ============ FORGE (create questline) ============ */
+/* Shares the gate palette/fonts (base.css :root) but reads as a
+   cartographer's table: a wide parchment desk where each field is a
+   waypoint on a dashed quest-route. */
+
+.forge {
+  min-height: calc(100vh - 62px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 44px 20px 64px;
+  background:
+    radial-gradient(
+      900px 500px at 50% 0%,
+      rgba(201, 150, 46, 0.18),
+      transparent 60%
+    ),
+    var(--dark);
+}
+.forge-desk-wrap {
+  width: 620px;
+  max-width: 96vw;
+}
+
+/* ---- brand header ---- */
+.forge-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  text-align: center;
+  animation: fadeIn 0.5s ease both;
+}
+.forge-sigil {
+  width: 56px;
+  height: 56px;
+  background: var(--gold);
+  border: 4px solid var(--black);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 30px;
+  color: var(--ink-dark);
+  animation: floaty 3s infinite;
+}
+.forge-kicker {
+  margin: 6px 0 0;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: var(--sand);
+}
+.forge-title {
+  margin: 0;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 30px;
+  font-weight: 400;
+  letter-spacing: 4px;
+  color: #f0e2bc;
+}
+.forge-tagline {
+  margin: 0;
+  font-size: 15px;
+  font-style: italic;
+  color: var(--sand);
+}
+
+/* ---- the desk (parchment card) ---- */
+.forge-desk {
+  position: relative;
+  background: var(--card);
+  border: 4px solid var(--black);
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.4);
+  padding: 30px 34px 26px;
+  animation: fadeIn 0.5s ease 0.1s both;
+}
+/* survey-tick corners, like a surveyed map sheet */
+.forge-desk::before,
+.forge-desk::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 3px solid var(--gold);
+}
+.forge-desk::before {
+  top: 8px;
+  left: 8px;
+  border-right: none;
+  border-bottom: none;
+}
+.forge-desk::after {
+  bottom: 8px;
+  right: 8px;
+  border-left: none;
+  border-top: none;
+}
+.forge-heading {
+  margin: 0 0 22px;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 2px;
+  color: var(--ink);
+  text-align: center;
+}
+
+/* ---- the route + waypoints ---- */
+.forge-fields {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-left: 30px;
+  margin-bottom: 24px;
+}
+.forge-fields::before {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 10px;
+  bottom: 10px;
+  border-left: 3px dashed var(--gold-dim);
+}
+.forge-field {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  animation: forgeReveal 0.45s ease both;
+}
+/* a diamond waypoint node sitting on the dashed route */
+.forge-field::before {
+  content: "";
+  position: absolute;
+  left: -29px;
+  top: 3px;
+  width: 12px;
+  height: 12px;
+  background: var(--gold);
+  border: 3px solid var(--black);
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+  transform: rotate(45deg);
+}
+.forge-field:nth-child(1) {
+  animation-delay: 0.12s;
+}
+.forge-field:nth-child(2) {
+  animation-delay: 0.18s;
+}
+.forge-field:nth-child(3) {
+  animation-delay: 0.24s;
+}
+.forge-field:nth-child(4) {
+  animation-delay: 0.3s;
+}
+.forge-field:nth-child(5) {
+  animation-delay: 0.36s;
+}
+.forge-field:nth-child(6) {
+  animation-delay: 0.42s;
+}
+
+.forge-field > label {
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--gold-dim);
+}
+.forge-hint {
+  margin: 0;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--muted);
+}
+.forge-note {
+  margin: 0;
+  text-align: center;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--muted-2);
+  background: var(--card-2);
+  border: 3px solid var(--line);
+  padding: 14px 18px;
+}
+.forge-note strong {
+  font-family: "Pixelify Sans", sans-serif;
+  font-weight: 400;
+  letter-spacing: 1px;
+  color: var(--gold-deep);
+}
+
+/* ---- inputs ---- */
+.forge-field input[type="text"],
+.forge-field input[type="file"],
+.forge-field textarea,
+.forge-field select {
+  width: 100%;
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  padding: 11px 13px;
+  font-size: 16px;
+  color: var(--ink);
+  font-family: inherit;
+}
+.forge-field textarea {
+  min-height: 96px;
+  resize: vertical;
+  line-height: 1.5;
+}
+.forge-field select:focus,
+.forge-field input:focus,
+.forge-field textarea:focus {
+  outline: 2px solid var(--gold);
+  outline-offset: 1px;
+}
+
+/* custom pixel dropdown */
+.forge-select {
+  position: relative;
+}
+.forge-select select {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  padding-right: 36px;
+}
+.forge-select::after {
+  content: "▾";
+  position: absolute;
+  right: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: "Pixelify Sans", sans-serif;
+  color: var(--gold-deep);
+  pointer-events: none;
+}
+
+/* file input's native button, dressed as a pixel button */
+.forge-field input[type="file"] {
+  padding: 9px 12px;
+  cursor: pointer;
+}
+.forge-field input[type="file"]::file-selector-button {
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 12px;
+  letter-spacing: 1px;
+  background: var(--ink);
+  color: var(--gold-bright);
+  border: 2px solid var(--black);
+  padding: 6px 10px;
+  margin-right: 12px;
+  cursor: pointer;
+}
+.forge-field input[type="file"]::file-selector-button:hover {
+  background: var(--gold);
+  color: var(--ink-dark);
+}
+
+/* ---- validation ---- */
+.errorlist {
+  list-style: none;
+  margin: 2px 0 0;
+  padding: 0;
+}
+.errorlist li {
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #a1341f;
+}
+.errorlist.nonfield {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border: 3px solid #a1341f;
+  background: rgba(161, 52, 31, 0.08);
+}
+
+/* ---- submit + foot ---- */
+.forge-btn {
+  display: block;
+  width: 100%;
+  text-align: center;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 16px;
+  letter-spacing: 2px;
+  color: var(--ink-dark);
+  background: var(--gold);
+  border: 3px solid var(--black);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.35);
+  padding: 14px;
+  cursor: pointer;
+  animation: fadeIn 0.45s ease 0.5s both;
+}
+.forge-btn:hover {
+  background: var(--gold-bright);
+}
+.forge-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.35);
+}
+.forge-foot {
+  margin-top: 22px;
+  border-top: 3px solid var(--line);
+  padding-top: 14px;
+  text-align: center;
+  font-size: 15px;
+  color: var(--muted);
+}
+.forge-link {
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 13px;
+  letter-spacing: 1px;
+  color: var(--gold-deep);
+  text-decoration: none;
+  border-bottom: 2px solid var(--gold);
+}
+.forge-link:hover {
+  color: var(--gold);
+}
+
+@keyframes forgeReveal {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 520px) {
+  .forge-desk {
+    padding: 24px 18px;
+  }
+  .forge-fields {
+    padding-left: 26px;
+  }
+  .forge-title {
+    font-size: 24px;
+  }
+}

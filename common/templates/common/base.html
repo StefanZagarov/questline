@@ -21,7 +21,10 @@
           <div class="wordmark">QUESTLINE</div>
           <div class="spacer"></div>
           <div class="lv-badge" data-lv>LV 3</div>
-          <a class="leave-btn" href="{% url 'login' %}">LEAVE ⇥</a>
+          <form method="POST" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button class="leave-btn">LEAVE ⇥</button>
+          </form>
         </div>
       </header>
     {% endblock %}

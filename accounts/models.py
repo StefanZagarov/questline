@@ -2,6 +2,8 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+from common.validators import validate_image_size
+
 
 class AppUser(AbstractUser):
     email = models.EmailField(unique=True)
@@ -17,7 +19,9 @@ class Profile(models.Model):
 
     first_name = models.CharField(max_length=50, null=True, blank=True)
     last_name = models.CharField(max_length=50, null=True, blank=True)
-    profile_picture = models.URLField(null=True, blank=True)
+    avatar = models.ImageField(
+        upload_to="avatars", validators=(validate_image_size,), blank=True, null=True
+    )
 
     def get_profile_name(self):
         if self.first_name and self.last_name:

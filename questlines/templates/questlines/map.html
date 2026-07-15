@@ -1,0 +1,9 @@
+{% extends 'common/base.html' %}
+{% block content %}
+  {% for quest in questline.quests.all %}
+    {{ quest.title }}
+  {% empty %}
+    <p>Here you Claude will add again one of those + buttons to add the first quest</p>
+  {% endfor %}
+  <a href="{% url 'quest-create' questline.pk %}">Add quest</a>
+{% endblock %}

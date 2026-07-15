@@ -10,9 +10,10 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
 
-from django.conf.global_settings import LOGOUT_REDIRECT_URL
+from django.conf.global_settings import LOGOUT_REDIRECT_URL, MEDIA_ROOT
 from django.urls import reverse_lazy
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -41,7 +42,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "accounts",
-    "common"
+    "common",
+    "questlines",
 ]
 
 MIDDLEWARE = [
@@ -91,6 +93,7 @@ AUTHENTICATION_BACKENDS = [
     "accounts.backends.MyBackend",
 ]
 
+LOGIN_URL = reverse_lazy("login")
 LOGIN_REDIRECT_URL = reverse_lazy("home")
 LOGOUT_REDIRECT_URL = reverse_lazy("login")
 
@@ -130,3 +133,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = "static/"
+
+MEDIA_URL = "media/"
+MEDIA_ROOT = os.path.join(BASE_DIR / "covers")

@@ -228,6 +228,10 @@ textarea:focus {
   padding: 5px 10px;
 }
 .leave-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font: inherit;
   font-family: "Pixelify Sans", sans-serif;
   font-size: 12px;
   letter-spacing: 1px;
@@ -240,4 +244,3 @@ textarea:focus {
   color: #f0e2bc;
   border-color: var(--sand);
 }
-

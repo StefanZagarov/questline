@@ -10,6 +10,7 @@ UserModel = get_user_model()
 
 
 class UserRegisterView(views.CreateView):
+    redirect_authenticated_user = True
     model = UserModel
     # Redundant, automatically set, but displaying it here to show how assigning a form works
     form_class = AppUserCreationForm
@@ -18,6 +19,7 @@ class UserRegisterView(views.CreateView):
 
 
 class UserLoginView(auth_views.LoginView):
+    redirect_authenticated_user = True
     template_name = "accounts/login-page.html"
 
 

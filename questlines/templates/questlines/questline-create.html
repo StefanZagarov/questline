@@ -1,0 +1,62 @@
+{% extends 'common/base.html' %}
+{% load static %}
+{% load custom_filters %}
+{% block extra_css %}
+  <link rel="stylesheet"
+        href="{% static 'questlines/css/questline-form.css' %}">
+{% endblock %}
+{% block content %}
+  <div class="forge">
+    <div class="forge-desk-wrap">
+      <header class="forge-brand">
+        <div class="forge-sigil">✦</div>
+        <p class="forge-kicker">THE CARTOGRAPHER'S TABLE</p>
+        <h1 class="forge-title">CHART A NEW QUESTLINE</h1>
+        <p class="forge-tagline">every great adventure begins as lines on parchment.</p>
+      </header>
+      <section class="forge-desk">
+        <h2 class="forge-heading">✎ DRAFT THE MAP</h2>
+        <form class="forge-form" method="POST" enctype="multipart/form-data">
+          {% csrf_token %}
+          {{ form.non_field_errors }}
+          <div class="forge-fields">
+            <div class="forge-field">
+              <label for="id_title">THE NAME OF THE ADVENTURE</label>
+              {{ form.title|placeholder:'e.g. Master Chef' }}
+              {{ form.title.errors }}
+            </div>
+            <div class="forge-field">
+              <label for="id_description">DESCRIBE THE JOURNEY</label>
+              {{ form.description|placeholder:'What awaits those who accept this quest?' }}
+              {{ form.description.errors }}
+            </div>
+            <div class="forge-field">
+              <label for="id_category">REALM / CATEGORY</label>
+              {{ form.category|placeholder:'e.g. Cooking, Backend, Fitness' }}
+              {{ form.category.errors }}
+            </div>
+            <div class="forge-field">
+              <label for="id_difficulty">PERIL LEVEL</label>
+              <div class="forge-select">{{ form.difficulty }}</div>
+              {{ form.difficulty.errors }}
+            </div>
+            <div class="forge-field">
+              <label for="id_cover_image">BANNER OF THE REALM (OPTIONAL)</label>
+              {{ form.cover_image }}
+              {{ form.cover_image.errors }}
+            </div>
+            <div class="forge-field">
+              <p class="forge-note">
+                ✒ Your questline starts as a <strong>Draft</strong> — chart its map, then publish it to the guild hall.
+              </p>
+            </div>
+          </div>
+          <button class="forge-btn" type="submit">⚔ FORGE THE QUESTLINE</button>
+        </form>
+        <footer class="forge-foot">
+          Changed your mind? <a class="forge-link" href="{% url 'home' %}">← BACK TO THE GUILD HALL</a>
+        </footer>
+      </section>
+    </div>
+  </div>
+{% endblock %}
