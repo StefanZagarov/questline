@@ -17,13 +17,16 @@
         <h2 class="card-heading">⚑ RESUME YOUR ADVENTURE</h2>
         <form class="stack" method="POST">
           {% csrf_token %}
+          {{ form.non_field_errors }}
           <div class="field">
             <label for="id_username">SCROLL OF IDENTITY (USERNAME/EMAIL)</label>
             {{ form.username|placeholder:'Rowan the Taskcrusher/adventurer@realm.com' }}
+            {{ form.username.errors }}
           </div>
           <div class="field">
             <label for="id_password">SECRET RUNE (PASSWORD)</label>
             {{ form.password|placeholder:'••••••••' }}
+            {{ form.password.errors }}
           </div>
           <button class="btn btn-primary" type="submit">▶ ENTER THE REALM</button>
         </form>

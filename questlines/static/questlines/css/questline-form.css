@@ -4,7 +4,7 @@
    waypoint on a dashed quest-route. */
 
 .forge {
-  min-height: calc(100vh - 62px);
+  min-height: calc(100vh - 66px); /* pinned topbar (62) + its 4px bottom border */
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -260,24 +260,7 @@
   color: var(--ink-dark);
 }
 
-/* ---- validation ---- */
-.errorlist {
-  list-style: none;
-  margin: 2px 0 0;
-  padding: 0;
-}
-.errorlist li {
-  font-family: "Pixelify Sans", sans-serif;
-  font-size: 11px;
-  letter-spacing: 1px;
-  color: #a1341f;
-}
-.errorlist.nonfield {
-  margin: 0 0 16px;
-  padding: 10px 12px;
-  border: 3px solid #a1341f;
-  background: rgba(161, 52, 31, 0.08);
-}
+/* validation styling now lives in base.css — every page renders the same markup */
 
 /* ---- submit + foot ---- */
 .forge-btn {

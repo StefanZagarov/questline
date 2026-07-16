@@ -1,0 +1,679 @@
+/* ============ QUEST MAP ============ */
+/* Ported from the reference design (reference/style.css).
+   .map-canvas is the coordinate space: every .qgroup measures its
+   left/top against it, using values printed from the DB. */
+
+.map-page {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 32px 28px 90px;
+}
+
+.map-heading-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 4px;
+}
+.map-back {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 12px;
+  letter-spacing: 2px;
+  line-height: 1;
+  color: var(--ink);
+  background: var(--card-2);
+  border: 3px solid var(--ink);
+  box-shadow: 3px 3px 0 rgba(58, 44, 21, 0.25);
+  padding: 9px 13px;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.map-back:hover {
+  background: var(--gold);
+  color: var(--ink-dark);
+}
+.map-back:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 rgba(58, 44, 21, 0.25);
+}
+.map-title {
+  margin: 0;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: 2px;
+  color: var(--ink);
+  text-shadow: 2px 2px 0 rgba(201, 150, 46, 0.3);
+}
+.map-hint {
+  font-size: 15px;
+  font-style: italic;
+  color: var(--muted);
+}
+
+.legend {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  font-size: 13.5px;
+  color: var(--muted-2);
+  margin-bottom: 26px;
+}
+.legend .sep {
+  border-left: 2px solid #d9cba4;
+  padding-left: 18px;
+  color: var(--muted);
+}
+.sw-done {
+  color: var(--green);
+}
+.sw-open {
+  color: var(--gold);
+}
+.sw-sealed {
+  color: #9c9077;
+}
+
+/* ---- the canvas + its docked toolbar ---- */
+.map-scroll {
+  overflow-x: auto;
+}
+
+/* same dashed rule as the canvas, minus the bottom edge, so the toolbar
+   reads as the top of the map's zone rather than a box sitting on it */
+.map-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 990px;
+  background: transparent;
+  border: 3px dashed rgba(138, 122, 85, 0.35);
+  border-bottom: none;
+  padding: 9px 12px;
+}
+.map-toolbar-sep {
+  width: 2px;
+  align-self: stretch;
+  background: rgba(138, 122, 85, 0.3);
+}
+.map-toolbar-count {
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--muted);
+}
+.map-tool {
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--ink);
+  background: var(--card);
+  border: 2px solid var(--ink);
+  box-shadow: 3px 3px 0 rgba(58, 44, 21, 0.25);
+  padding: 8px 13px;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.map-tool:hover {
+  background: var(--paper);
+  color: var(--ink);
+}
+.map-tool:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 rgba(58, 44, 21, 0.25);
+}
+.map-tool-primary {
+  background: var(--gold);
+  color: var(--ink-dark);
+}
+.map-tool-primary:hover {
+  background: var(--gold-bright);
+  color: var(--ink-dark);
+}
+
+.map-canvas {
+  position: relative; /* the origin every .qgroup measures against */
+  width: 100%;
+  min-width: 990px; /* below this the canvas scrolls rather than squashing coords */
+  height: 1490px;
+  border: 3px dashed rgba(138, 122, 85, 0.35);
+}
+.map-canvas > svg {
+  position: absolute;
+  inset: 0;
+}
+/* lines are drawn by JS into this svg — see drawEdges(). They sit under the
+   cards (z-index 2) and must never eat a click meant for one. */
+.map-edges {
+  pointer-events: none;
+  overflow: visible;
+}
+.map-edge {
+  fill: none; /* a <path> is filled by default — without this you get a blob */
+  stroke: var(--gold-deep);
+  stroke-width: 4;
+  stroke-linecap: square;
+}
+/* the route into an optional quest is dashed, matching the legend */
+.map-edge.is-optional {
+  stroke: var(--muted);
+  stroke-dasharray: 7 7;
+}
+
+.edge-label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  background: var(--ink);
+  color: var(--gold-bright);
+  border: 2px solid var(--gold);
+  padding: 3px 10px;
+  white-space: nowrap;
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* ---- a quest, pinned at its coords ---- */
+.qgroup {
+  position: absolute; /* left/top come from the inline style, per quest */
+  width: 230px;
+  z-index: 2;
+  /* nothing here should highlight while you drag it across the map */
+  user-select: none;
+}
+/* grab = "this can be picked up", grabbing = "you have it". :active covers the
+   whole press, and pointer capture keeps it applying even off the card. */
+.qgroup:active {
+  z-index: 4; /* the card you're holding rides above the others */
+}
+.qcard {
+  cursor: grab;
+}
+.qgroup:active .qcard {
+  cursor: grabbing;
+}
+/* hover-revealed edit/delete, stacked at the card's top-right.
+   Note: hover doesn't exist on touch — these are desktop-only, consistent with
+   the fixed 990px canvas. */
+.qcard-actions {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  z-index: 3; /* above the card and its shadow */
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  opacity: 0;
+  pointer-events: none; /* invisible AND unclickable, so they can't block the card */
+  transition: opacity 0.12s ease;
+}
+/* :has(:focus-visible), not :focus-within — closing the drawer returns focus to
+   the pen, which would leave the buttons stuck on. :focus-visible ignores mouse
+   focus and only matches keyboard, which is who the rule is for anyway. */
+.qgroup:hover .qcard-actions,
+.qcard-actions:has(:focus-visible) {
+  opacity: 1;
+  pointer-events: auto;
+}
+.qcard-action {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--ink);
+  background: var(--card-2);
+  border: 2px solid var(--ink);
+  box-shadow: 2px 2px 0 rgba(58, 44, 21, 0.35);
+  cursor: pointer;
+  padding: 0;
+}
+.qcard-action:hover {
+  background: var(--gold-bright);
+}
+.qcard-action:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0 0 0 rgba(58, 44, 21, 0.35);
+}
+.qcard-action-danger:hover {
+  background: #a1341f;
+  color: #f0e2bc;
+}
+
+.qcard {
+  position: relative;
+  display: block;
+  width: 230px;
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+  padding: 11px 16px;
+  text-align: center;
+  text-decoration: none;
+}
+/* driven by the GROUP, not the card: the action buttons sit outside the card's
+   box, so .qcard:hover would drop the moment you reached for the pen */
+.qgroup:hover .qcard {
+  transform: translate(-2px, -2px);
+}
+.qcard .crumb {
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  margin-bottom: 3px;
+}
+.qcard .qtitle {
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 17px;
+  letter-spacing: 1px;
+  line-height: 1.15;
+}
+
+/* progress-driven states — used once Enrollment/Objective exist */
+.qcard-done {
+  background: var(--green);
+}
+.qcard-done .crumb {
+  color: #bfd3ac;
+}
+.qcard-done .qtitle {
+  color: #f0e2bc;
+}
+.qcard-open {
+  background: var(--gold-bright);
+}
+.qcard-open.glow {
+  animation: glowPulse 2.4s infinite;
+}
+.qcard-open .crumb {
+  color: var(--gold-dim);
+}
+.qcard-open .qtitle {
+  color: var(--ink-dark);
+}
+.qcard-locked {
+  background: #ddd2b4;
+}
+.qcard-locked .crumb {
+  color: var(--gold-dim);
+}
+.qcard-locked .qtitle {
+  color: var(--muted);
+}
+
+/* the author's own draft map: no progress yet, so cards read as plain parchment */
+.qcard-draft {
+  background: var(--card);
+}
+.qcard-draft .crumb {
+  color: var(--gold-dim);
+}
+.qcard-draft .qtitle {
+  color: var(--ink);
+}
+
+.qcard-optional {
+  background: var(--card-2);
+  border-style: dashed;
+}
+.optional-flag {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 10px;
+  letter-spacing: 2px;
+  background: var(--muted-2);
+  color: #f0e2bc;
+  padding: 2px 10px;
+  white-space: nowrap;
+}
+
+/* ---- objective pills (rendered once Objective exists) ---- */
+.pill-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-left: 16px;
+  margin-left: 10px;
+  margin-top: 10px;
+}
+.pill-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pill-dash {
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 15px;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.pill {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: #f2dca0;
+  border: 2px solid var(--ink);
+  box-shadow: 3px 3px 0 rgba(58, 44, 21, 0.2);
+  padding: 6px 12px;
+  max-width: 250px;
+  text-decoration: none;
+}
+.pill:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 rgba(58, 44, 21, 0.3);
+}
+.pill .glyph {
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 12px;
+  color: var(--gold-dim);
+  flex-shrink: 0;
+}
+.pill .plabel {
+  font-size: 14px;
+  color: var(--black);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pill-done {
+  background: #e4ebd6;
+}
+.pill-done .glyph {
+  color: var(--green);
+}
+.pill-done .plabel {
+  color: #5c6540;
+  text-decoration: line-through;
+}
+.pill-muted {
+  opacity: 0.55;
+}
+
+.summit {
+  position: absolute;
+  transform: translateX(-50%);
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 13px;
+  letter-spacing: 2px;
+  color: #f0e2bc;
+  background: var(--ink);
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 rgba(58, 44, 21, 0.3);
+  padding: 10px 22px;
+  z-index: 2;
+  white-space: nowrap;
+}
+
+/* ============ ADD-QUEST DRAWER (native <dialog>) ============ */
+/* A dialog is centred and auto-sized by default; these resets dock it to the
+   right edge and let it fill the height, turning it into a side panel. */
+.drawer-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: auto;
+  margin: 0; /* default is `auto`, which centres it */
+  width: 480px;
+  max-width: 92vw;
+  height: 100%;
+  max-height: 100vh; /* default caps at calc(100% - 6px - 2em) */
+  background: var(--card);
+  border: none;
+  border-left: 4px solid var(--ink);
+  box-shadow: -10px 0 30px rgba(20, 16, 10, 0.35);
+  padding: 26px 30px 44px;
+  overflow-y: auto;
+  color: var(--ink);
+}
+/* ::backdrop only exists when opened with showModal(), not show() or [open] */
+.drawer-panel::backdrop {
+  background: rgba(26, 19, 8, 0.45);
+  animation: fadeIn 0.2s ease-out;
+}
+.drawer-panel[open] {
+  animation: drawerIn 0.25s ease-out;
+}
+
+.drawer-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.drawer-crumb {
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--gold-deep);
+}
+.drawer-close {
+  margin-left: auto;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 15px;
+  color: var(--ink);
+  background: var(--card-2);
+  border: 3px solid var(--ink);
+  box-shadow: 3px 3px 0 rgba(58, 44, 21, 0.3);
+  cursor: pointer;
+}
+.drawer-close:hover {
+  background: var(--gold-bright);
+}
+.drawer-close:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 rgba(58, 44, 21, 0.3);
+}
+
+.drawer-title {
+  margin: 0 0 8px;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 28px;
+  font-weight: 400;
+  letter-spacing: 1px;
+  color: var(--ink);
+  text-shadow: 2px 2px 0 rgba(201, 150, 46, 0.3);
+}
+.drawer-lede {
+  margin: 0 0 20px;
+  font-size: 16px;
+  font-style: italic;
+  color: var(--muted-2);
+  line-height: 1.5;
+}
+
+/* ---- fields, on the same dashed route as the forge ---- */
+.drawer-fields {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-left: 30px;
+  margin-bottom: 26px;
+}
+.drawer-fields::before {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 10px;
+  bottom: 10px;
+  border-left: 3px dashed var(--gold-dim);
+}
+.drawer-field {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.drawer-field::before {
+  content: "";
+  position: absolute;
+  left: -29px;
+  top: 3px;
+  width: 12px;
+  height: 12px;
+  background: var(--gold);
+  border: 3px solid var(--black);
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+  transform: rotate(45deg);
+}
+.drawer-field > label {
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--gold-dim);
+}
+.drawer-hint {
+  margin: 0;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--muted);
+}
+
+.drawer-field input[type="text"],
+.drawer-field select {
+  width: 100%;
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  padding: 11px 13px;
+  font-size: 16px;
+  color: var(--ink);
+  font-family: inherit;
+}
+.drawer-field select[multiple] {
+  min-height: 118px;
+  padding: 6px;
+}
+.drawer-field select[multiple] option {
+  padding: 6px 8px;
+}
+.drawer-field input:focus,
+.drawer-field select:focus {
+  outline: 2px solid var(--gold);
+  outline-offset: 1px;
+}
+
+/* checkbox row: label wraps the box, so the whole line is a hit target */
+.drawer-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+.drawer-check input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  accent-color: var(--gold-deep);
+  cursor: pointer;
+}
+.drawer-check span {
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--gold-dim);
+}
+
+.drawer-errors:empty {
+  display: none;
+}
+
+/* ---- actions ---- */
+.drawer-actions {
+  display: flex;
+  gap: 12px;
+}
+.drawer-btn {
+  flex: 1;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 14px;
+  letter-spacing: 2px;
+  border: 3px solid var(--black);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.35);
+  padding: 13px;
+  cursor: pointer;
+}
+.drawer-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.35);
+}
+.drawer-btn-primary {
+  background: var(--gold);
+  color: var(--ink-dark);
+}
+.drawer-btn-primary:hover {
+  background: var(--gold-bright);
+}
+.drawer-btn-quiet {
+  flex: 0 0 auto;
+  background: var(--card-2);
+  color: var(--muted-2);
+}
+.drawer-btn-quiet:hover {
+  background: var(--paper);
+}
+
+/* ---- empty canvas ---- */
+.map-empty {
+  position: absolute;
+  top: 120px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+}
+.map-empty-btn {
+  width: 220px;
+  height: 96px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: transparent;
+  border: 3px dashed #c3b183;
+  color: var(--muted);
+  text-decoration: none;
+  cursor: pointer;
+}
+.map-empty-btn:hover {
+  border-color: var(--gold);
+  color: var(--gold-deep);
+  background: rgba(201, 150, 46, 0.06);
+}
+.map-empty-btn .plus {
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 34px;
+  line-height: 1;
+}
+.map-empty-btn .label {
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 14px;
+  letter-spacing: 2px;
+}
+.map-empty-text {
+  margin: 0;
+  font-size: 15px;
+  font-style: italic;
+  color: var(--muted);
+}

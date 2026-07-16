@@ -1,0 +1,65 @@
+{% comment %}
+  The add-quest drawer. Included by map.html — it is not rendered by any view of
+  its own, and has no URL. It must live inside the map page because JS opens it
+  with showModal(), which needs the markup already in the DOM.
+
+  Context it relies on (inherited from whatever includes it):
+    form      — QuestForm, supplied by DetailQuestlineView.get_context_data
+    questline — the Questline being charted, for the POST target
+{% endcomment %}
+{% if form %}
+  <dialog class="drawer-panel" id="quest-drawer">
+    {% comment %}
+      novalidate: hand validation to Django. The browser's own `required` check
+      fires before our submit handler, so we'd never see our styled errors —
+      and it's only a convenience anyway, since anyone can strip it.
+    {% endcomment %}
+    <form class="quest-form"
+          id="quest-form"
+          method="POST"
+          novalidate
+          action="{% url 'quest-create' questline.pk %}">
+      {% csrf_token %}
+      {% comment %}
+        The text below is the CREATE wording — it is what Django renders, and what
+        the drawer falls back to if the JS never runs. openDrawer() swaps these
+        three via textContent when the pen opens it in edit mode.
+      {% endcomment %}
+      <div class="drawer-top">
+        <span class="drawer-crumb" data-drawer-crumb>✎ NEW QUEST</span>
+        <button class="drawer-close"
+                type="button"
+                data-close-drawer
+                aria-label="Close">✕</button>
+      </div>
+      <h2 class="drawer-title" data-drawer-title>CHART A QUEST</h2>
+      <p class="drawer-lede" data-drawer-lede>A node on the road. Name it, then it will show on the map.</p>
+      <div class="drawer-errors" data-non-field-errors>{{ form.non_field_errors }}</div>
+      <div class="drawer-fields">
+        <div class="drawer-field">
+          <label for="{{ form.title.id_for_label }}">THE NAME OF THE QUEST</label>
+          {{ form.title }}
+          <div data-errors-for="title">{{ form.title.errors }}</div>
+        </div>
+        <div class="drawer-field">
+          <label class="drawer-check">
+            {{ form.is_optional }}
+            <span>A SIDE QUEST — OPTIONAL PATH</span>
+          </label>
+          <p class="drawer-hint">Optional quests appear dashed, and never seal the road ahead.</p>
+          <div data-errors-for="is_optional">{{ form.is_optional.errors }}</div>
+        </div>
+        <div class="drawer-field">
+          <label for="{{ form.prerequisite_quests.id_for_label }}">SEALED UNTIL THESE ARE CONQUERED</label>
+          {{ form.prerequisite_quests }}
+          <p class="drawer-hint">Hold Ctrl to pick several, or none at all.</p>
+          <div data-errors-for="prerequisite_quests">{{ form.prerequisite_quests.errors }}</div>
+        </div>
+      </div>
+      <div class="drawer-actions">
+        <button class="drawer-btn drawer-btn-quiet" type="button" data-close-drawer>CANCEL</button>
+        <button class="drawer-btn drawer-btn-primary" type="submit" data-submit-label>⚔ CHART IT</button>
+      </div>
+    </form>
+  </dialog>
+{% endif %}

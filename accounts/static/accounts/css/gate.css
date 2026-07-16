@@ -93,6 +93,8 @@
   color: var(--ink);
 }
 
+/* validation styling now lives in base.css — every page renders the same markup */
+
 .btn {
   display: block;
   text-align: center;
@@ -113,7 +115,6 @@
 }
 .btn-primary:hover {
   background: var(--gold-bright);
-  transform: translate(-1px, -1px);
 }
 .btn-primary:active {
   transform: translate(2px, 2px);

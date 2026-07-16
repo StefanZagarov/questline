@@ -67,6 +67,29 @@ textarea:focus {
   color: var(--ink-dark);
 }
 
+/* ============ FORM ERRORS ============ */
+/* Defined once here: every page renders Django's <ul class="errorlist">, and the
+   drawer's JS builds the same markup, so all of them style themselves for free. */
+
+.errorlist {
+  list-style: none;
+  margin: 2px 0 0;
+  padding: 0;
+}
+.errorlist li {
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: #a1341f;
+}
+/* form-level errors (Django's "__all__") lead the form rather than sit under a field */
+.errorlist.nonfield {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 3px solid #a1341f;
+  background: rgba(161, 52, 31, 0.08);
+}
+
 @keyframes glowPulse {
   0%,
   100% {
@@ -122,6 +145,9 @@ textarea:focus {
   align-items: center;
   gap: 14px;
   padding: 12px 28px;
+  /* pinned so the bar is the same height on every page: without it the tallest
+     child wins, and pages with the progress block push LV/LEAVE out of line */
+  min-height: 62px;
 }
 .topbar-inner.wide-gap {
   gap: 24px;
@@ -162,6 +188,17 @@ textarea:focus {
   align-items: center;
   gap: 12px;
 }
+/* the logo is the way home — the one convention every site shares */
+a.brand-row,
+a.brand-row:hover {
+  text-decoration: none;
+}
+a.brand-row .wordmark {
+  text-decoration: none;
+}
+a.brand-row:hover .logo-sm {
+  background: var(--gold-bright);
+}
 .wordmark {
   font-family: "Pixelify Sans", sans-serif;
   font-size: 20px;
@@ -190,6 +227,14 @@ textarea:focus {
 }
 .spacer {
   flex: 1;
+}
+/* LV + LEAVE are one group with their own spacing, so .wide-gap on the
+   container can't push them apart and move the badge between pages */
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
 }
 .topbar-progress {
   width: 280px;

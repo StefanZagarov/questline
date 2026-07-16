@@ -1,9 +1,138 @@
 {% extends 'common/base.html' %}
+{% load static %}
+{% block extra_css %}
+  <link rel="stylesheet"
+        href="{% static 'questlines/css/questline-map.css' %}">
+{% endblock %}
+{% block extra_js %}
+  <script src="{% static 'questlines/js/quest-drawer.js'%}" defer></script>
+{% endblock %}
+{% block topbar %}
+  <header class="topbar">
+    <div class="topbar-inner wide-gap">
+      <a class="brand-row"
+         href="{% url 'home' %}"
+         title="Back to the guild hall">
+        <div class="logo-sm">◆</div>
+        <div class="wordmark">QUESTLINE</div>
+      </a>
+      <div class="topbar-divider"></div>
+      <div class="topbar-quest">
+        <div class="kicker">✎ CHARTING THE MAP</div>
+        <div class="quest-name">{{ questline.title }}</div>
+      </div>
+      {# hardcoded until Enrollment/ObjectiveProgress exist #}
+      <div class="topbar-progress">
+        <div class="bar-labels">
+          <span data-hud-count>1 / 6 QUESTS</span>
+          <span data-hud-pct>17%</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill" data-hud-bar style="width: 17%;"></div>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <div class="lv-badge" data-lv>LV 3</div>
+        <form method="POST" action="{% url 'logout' %}">
+          {% csrf_token %}
+          <button class="leave-btn">LEAVE ⇥</button>
+        </form>
+      </div>
+    </div>
+  </header>
+{% endblock %}
 {% block content %}
-  {% for quest in questline.quests.all %}
-    {{ quest.title }}
-  {% empty %}
-    <p>Here you Claude will add again one of those + buttons to add the first quest</p>
-  {% endfor %}
-  <a href="{% url 'quest-create' questline.pk %}">Add quest</a>
+  <main class="map-page">
+    <div class="map-heading-row">
+      <a class="map-back"
+         href="{% url 'home' %}"
+         title="Back to the guild hall">← BACK</a>
+      <h1 class="map-title">✦ THE QUEST MAP</h1>
+      <div class="map-hint">drag a card to move it · click the card to view a quest</div>
+    </div>
+    <div class="legend">
+      <div>
+        <span class="sw-done">■</span> conquered
+      </div>
+      <div>
+        <span class="sw-open">■</span> open
+      </div>
+      <div>
+        <span class="sw-sealed">■</span> sealed
+      </div>
+      <div class="sep">▣ task · ◄► meter · ✎ reflection</div>
+      <div class="sep">↓ quests within a step · → a new step begins · ╌╌ optional</div>
+    </div>
+    <div class="map-scroll">
+      {# the toolbar acts on the canvas, so it docks to the canvas #}
+      <div class="map-toolbar">
+        {# a button, not a link: it acts on this page rather than navigating #}
+        <button class="map-tool map-tool-primary" type="button" data-open-drawer>+ ADD QUEST</button>
+        <span class="map-toolbar-sep"></span>
+        <span class="map-toolbar-count" data-quest-count>{{ questline.quests.count }} quest{{ questline.quests.count|pluralize }}</span>
+      </div>
+      <div class="map-canvas">
+        <svg class="map-edges" data-edges>
+        </svg>
+        {% for quest in questline.quests.all %}
+          <div class="qgroup"
+               data-quest-id="{{ quest.pk }}"
+               style="left:{{ quest.coord_x }}px;
+                      top:{{ quest.coord_y }}px"
+               data-move-url="{% url 'quest-move' quest.pk %}"
+               data-prerequisites="{% for prerequisite in quest.prerequisite_quests.all %}{{ prerequisite.pk }}{% if not forloop.last %},{% endif %}{% endfor %}">
+            {% comment %}
+              Revealed on hover of the qgroup. Each button carries its own URL and
+              the quest's current values, so the JS never has to build a URL or go
+              fetch the quest before prefilling the drawer.
+            {% endcomment %}
+            <div class="qcard-actions">
+              <button class="qcard-action"
+                      type="button"
+                      data-edit-quest
+                      data-edit-url="{% url 'quest-edit' quest.pk %}"
+                      data-title="{{ quest.title }}"
+                      data-optional="{{ quest.is_optional|yesno:'1,0' }}"
+                      title="Edit this quest"
+                      aria-label="Edit quest">✎</button>
+              <button class="qcard-action qcard-action-danger"
+                      type="button"
+                      data-delete-quest
+                      data-delete-url="{% url 'quest-delete' quest.pk %}"
+                      data-title="{{ quest.title }}"
+                      title="Delete this quest"
+                      aria-label="Delete quest">🗑</button>
+            </div>
+            {% comment %}
+              draggable=false: belt-and-braces with the JS preventDefault — an <a>
+              is natively draggable and would spawn a drag ghost.
+            {% endcomment %}
+            <a class="qcard qcard-draft{% if quest.is_optional %} qcard-optional{% endif %}"
+               draggable="false"
+               href="#">
+              {% if quest.is_optional %}<div class="optional-flag">OPTIONAL PATH</div>{% endif %}
+              <div class="crumb">
+                {% if quest.is_optional %}
+                  SIDE QUEST
+                {% else %}
+                  QUEST {{ forloop.counter }}
+                {% endif %}
+              </div>
+              <div class="qtitle">{{ quest.title }}</div>
+            </a>
+          </div>
+        {% empty %}
+          <div class="map-empty" data-empty>
+            <button class="map-empty-btn" type="button" data-open-drawer>
+              <span class="plus">+</span>
+              <span class="label">PLACE FIRST QUEST</span>
+            </button>
+            <p class="map-empty-text">This map is uncharted.</p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </main>
+  {# renders inline, with this page's context — a text split, not a routing one #}
+  {% include 'questlines/_quest-drawer.html' %}
 {% endblock %}

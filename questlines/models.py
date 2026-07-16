@@ -42,9 +42,10 @@ class Quest(models.Model):
     questline = models.ForeignKey(
         Questline, on_delete=models.CASCADE, related_name="quests"
     )
-    prerequisite_quests = models.ManyToManyField("self", symmetrical=False, blank=True)
     # Making quest.quest_set read as quest.unlocks
-    related_name = "unlocks"
+    prerequisite_quests = models.ManyToManyField(
+        "self", symmetrical=False, blank=True, related_name="unlocks"
+    )
 
 
 # class Objective(models.Model):

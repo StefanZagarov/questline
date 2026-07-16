@@ -17,14 +17,18 @@
     {% block topbar %}
       <header class="topbar">
         <div class="topbar-inner">
-          <div class="logo-sm">◆</div>
-          <div class="wordmark">QUESTLINE</div>
+          <a class="brand-row" href="{% url 'home' %}">
+            <div class="logo-sm">◆</div>
+            <div class="wordmark">QUESTLINE</div>
+          </a>
           <div class="spacer"></div>
-          <div class="lv-badge" data-lv>LV 3</div>
-          <form method="POST" action="{% url 'logout' %}">
-            {% csrf_token %}
-            <button class="leave-btn">LEAVE ⇥</button>
-          </form>
+          <div class="topbar-actions">
+            <div class="lv-badge" data-lv>LV 3</div>
+            <form method="POST" action="{% url 'logout' %}">
+              {% csrf_token %}
+              <button class="leave-btn">LEAVE ⇥</button>
+            </form>
+          </div>
         </div>
       </header>
     {% endblock %}

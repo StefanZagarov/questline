@@ -126,10 +126,6 @@
   padding: 11px;
   cursor: pointer;
 }
-.ql-cta:hover {
-  transform: translate(-1px, -1px);
-  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.35);
-}
 .ql-cta:active {
   transform: translate(2px, 2px);
   box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.3);
@@ -139,6 +135,7 @@
   color: var(--ink-dark);
 }
 .cta-gold:hover {
+  background: var(--gold-bright);
   color: var(--ink-dark);
 }
 .cta-quiet {
@@ -146,6 +143,7 @@
   color: var(--ink);
 }
 .cta-quiet:hover {
+  background: var(--paper);
   color: var(--ink);
 }
 .cta-dark {
@@ -153,6 +151,7 @@
   color: #f0e2bc;
 }
 .cta-dark:hover {
+  background: var(--muted-2);
   color: #f0e2bc;
 }
 
