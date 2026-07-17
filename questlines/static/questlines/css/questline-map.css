@@ -187,17 +187,15 @@
   z-index: 2;
   /* nothing here should highlight while you drag it across the map */
   user-select: none;
-}
-/* grab = "this can be picked up", grabbing = "you have it". :active covers the
-   whole press, and pointer capture keeps it applying even off the card. */
-.qgroup:active {
-  z-index: 4; /* the card you're holding rides above the others */
-}
-.qcard {
+  /* on the group, not the card: while it holds pointer capture the browser takes
+     the cursor from the capturing element, not from whatever's under the pointer */
   cursor: grab;
 }
-.qgroup:active .qcard {
+/* a class, not :active — preventDefault() on pointerdown cancels the active state
+   along with the drag ghost, so :active never matches mid-drag */
+.qgroup.is-dragging {
   cursor: grabbing;
+  z-index: 4; /* the card you're holding rides above the others */
 }
 /* hover-revealed edit/delete, stacked at the card's top-right.
    Note: hover doesn't exist on touch — these are desktop-only, consistent with

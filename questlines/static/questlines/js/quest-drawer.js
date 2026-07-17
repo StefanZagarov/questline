@@ -103,6 +103,9 @@ function showErrors(errors) {
 
 // How far the curve pulls straight out of each edge before bending.
 const EDGE_CURVE = 60;
+// Breathing room a card keeps from the border, all four sides. Must be >= the 10px
+// .qcard-actions overhang in questline-map.css, or its buttons cross the edge.
+const CARD_GUTTER = 10;
 
 // The point on `box`'s edge that faces `other`, plus which way that edge faces.
 function anchor(box, other) {
@@ -216,7 +219,7 @@ document.querySelectorAll("[data-edit-quest]").forEach((button) => {
 
 // ---- MOVE ----
 
-// A drag is three events stitched together, so the grab has to be remembered
+// A drag is four events stitched together, so the grab has to be remembered
 // between them — hence module scope rather than consts inside the handler.
 // draggedGroup also answers "is a drag happening?", since pointermove fires on
 // plain hover too.
@@ -232,6 +235,7 @@ document.querySelectorAll(".qgroup").forEach((group) => {
     const rectangle = group.getBoundingClientRect(); // viewport coords, like clientX/Y
 
     draggedGroup = group;
+    group.classList.add("is-dragging"); // drives the grabbing cursor + z-index
     grabX = event.clientX - rectangle.left; // how far into the card we grabbed
     grabY = event.clientY - rectangle.top;
 
@@ -248,8 +252,25 @@ document.querySelectorAll(".qgroup").forEach((group) => {
     const left = event.clientX - canvasRect.left - grabX;
     const top = event.clientY - canvasRect.top - grabY;
 
-    draggedGroup.style.left = `${left}px`;
-    draggedGroup.style.top = `${top}px`;
+    // The furthest a card's edge can sit and still keep its buttons inside.
+    const maxHorizontalPosition =
+      canvas.clientWidth - group.offsetWidth - CARD_GUTTER;
+    // Clamp: lift to the gutter, then cap at the far edge. Both bounds usually
+    // lose — they only win once the card has been dragged past them.
+    const clampedHorizontalPosition = Math.min(
+      Math.max(left, CARD_GUTTER),
+      maxHorizontalPosition,
+    );
+
+    const maxVerticalPosition =
+      canvas.clientHeight - group.offsetHeight - CARD_GUTTER;
+    const clampedVerticalPosition = Math.min(
+      Math.max(top, CARD_GUTTER),
+      maxVerticalPosition,
+    );
+
+    draggedGroup.style.left = `${clampedHorizontalPosition}px`;
+    draggedGroup.style.top = `${clampedVerticalPosition}px`;
 
     drawEdges();
   });
@@ -260,6 +281,7 @@ document.querySelectorAll(".qgroup").forEach((group) => {
 
     const moved = draggedGroup; // keep the reference; await outlives the flag
     draggedGroup = null;
+    moved.classList.remove("is-dragging");
 
     const body = new FormData(); // no form to read, so build one
     body.append("coord_x", parseFloat(moved.style.left)); // "360px" → 360
@@ -276,6 +298,17 @@ document.querySelectorAll(".qgroup").forEach((group) => {
     if (!response.ok) {
       window.location.reload();
     }
+  });
+
+  // The browser can revoke a pointer mid-drag (OS gesture, interrupted touch) —
+  // then pointerup never fires and draggedGroup would stay set, so the next plain
+  // hover would drag the card with no button held. No POST: the card never landed
+  // anywhere deliberate, so it keeps its old coords and snaps back on next load.
+  group.addEventListener("pointercancel", () => {
+    if (!draggedGroup) return;
+
+    draggedGroup.classList.remove("is-dragging");
+    draggedGroup = null;
   });
 });
 
