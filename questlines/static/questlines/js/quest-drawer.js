@@ -53,8 +53,8 @@ function openDrawer(action, text) {
   form.action = action; // decides create vs edit
 
   // Undo the edit path's self-exclusion; form.reset() doesn't touch visibility.
-  Array.from(form.elements.prerequisite_quests.options).forEach((option) => {
-    option.hidden = false;
+  form.querySelectorAll('input[name="prerequisite_quests"]').forEach((input) => {
+    input.closest("label").hidden = false;
   });
 
   crumb.textContent = text.crumb;
@@ -206,13 +206,14 @@ document.querySelectorAll("[data-edit-quest]").forEach((button) => {
     openDrawer(editUrl, EDIT_TEXT); // resets, so prefill goes after
 
     form.elements.title.value = button.dataset.title;
+    form.elements.description.value = button.dataset.description;
     form.elements.is_optional.checked = button.dataset.optional === "1"; // dataset is always strings
 
-    // A multi-select has no single value — selection lives per option.
-    Array.from(form.elements.prerequisite_quests.options).forEach((option) => {
-      const isSelf = option.value === questId; // a quest can't require itself
-      option.hidden = isSelf;
-      option.selected = !isSelf && ids.includes(option.value); // false clears the last quest's picks
+    // Checkboxes share a name, not a value — selection lives per input.
+    form.querySelectorAll('input[name="prerequisite_quests"]').forEach((input) => {
+      const isSelf = input.value === questId; // a quest can't require itself
+      input.closest("label").hidden = isSelf; // hide the row, not just the box
+      input.checked = !isSelf && ids.includes(input.value); // false clears the last quest's picks
     });
   });
 });
@@ -283,6 +284,7 @@ document.querySelectorAll(".qgroup").forEach((group) => {
     draggedGroup = null;
     moved.classList.remove("is-dragging");
 
+    // When cursor releases, make a form with the x and y coordinates of the dragged card to send to the BE so they can be stored in the database, surviving reloads and app restarts
     const body = new FormData(); // no form to read, so build one
     body.append("coord_x", parseFloat(moved.style.left)); // "360px" → 360
     body.append("coord_y", parseFloat(moved.style.top));

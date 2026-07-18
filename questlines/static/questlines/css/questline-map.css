@@ -546,6 +546,7 @@
 }
 
 .drawer-field input[type="text"],
+.drawer-field textarea,
 .drawer-field select {
   width: 100%;
   background: var(--paper);
@@ -555,14 +556,55 @@
   color: var(--ink);
   font-family: inherit;
 }
-.drawer-field select[multiple] {
-  min-height: 118px;
-  padding: 6px;
+/* prerequisites roster — CheckboxSelectMultiple renders a <div> whose id is
+   derived from the field name, hence the id selector. Flat on the parchment,
+   no container; boxes follow the reference's .obj-check pixel look, drawn on
+   the input itself since Django's markup has no spare span to style. */
+#id_prerequisite_quests {
+  /* ≈ five rows (22px box + 12px row padding), then scroll */
+  max-height: 170px;
+  overflow-y: auto;
 }
-.drawer-field select[multiple] option {
-  padding: 6px 8px;
+#id_prerequisite_quests label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 2px;
+  cursor: pointer;
+  color: var(--ink);
+  font-size: 16px;
+}
+#id_prerequisite_quests label:hover {
+  color: var(--gold-deep);
+}
+#id_prerequisite_quests input[type="checkbox"] {
+  appearance: none; /* discard the native widget; the input becomes a bare styleable box */
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  margin: 0;
+  border: 3px solid var(--ink);
+  background: var(--paper);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 15px;
+  color: var(--paper);
+}
+#id_prerequisite_quests input[type="checkbox"]:checked {
+  background: var(--green);
+}
+#id_prerequisite_quests input[type="checkbox"]:checked::before {
+  content: "✓";
+}
+.drawer-field textarea {
+  min-height: 96px;
+  resize: vertical; /* free vertical growth; sideways would break the drawer */
 }
 .drawer-field input:focus,
+.drawer-field textarea:focus,
 .drawer-field select:focus {
   outline: 2px solid var(--gold);
   outline-offset: 1px;

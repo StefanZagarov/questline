@@ -92,6 +92,7 @@
                       data-edit-quest
                       data-edit-url="{% url 'quest-edit' quest.pk %}"
                       data-title="{{ quest.title }}"
+                      data-description="{{ quest.description }}"
                       data-optional="{{ quest.is_optional|yesno:'1,0' }}"
                       title="Edit this quest"
                       aria-label="Edit quest">✎</button>

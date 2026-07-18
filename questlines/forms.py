@@ -22,7 +22,8 @@ class CreateQuestlineForm(forms.ModelForm):
 class QuestForm(forms.ModelForm):
     class Meta:
         model = Quest
-        fields = ["title", "is_optional", "prerequisite_quests"]
+        fields = ["title", "description", "is_optional", "prerequisite_quests"]
+        widgets = {"prerequisite_quests": forms.CheckboxSelectMultiple}
 
     # questline_pk is keyword-only (it sits after *args) so it never reaches super(),
     # which would raise TypeError on an argument Django has never heard of.
@@ -40,8 +41,7 @@ class QuestForm(forms.ModelForm):
             # on itself forever, and Django would save it without complaint.
             quests = quests.exclude(pk=self.instance.pk)
 
-        # .queryset is what the widget renders as <option>s. Misspell it and Python
-        # silently creates a junk attribute instead of raising.
+        # .queryset is what the widget renders as <option>s
         self.fields["prerequisite_quests"].queryset = quests
 
 

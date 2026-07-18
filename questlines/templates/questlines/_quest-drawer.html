@@ -42,6 +42,12 @@
           <div data-errors-for="title">{{ form.title.errors }}</div>
         </div>
         <div class="drawer-field">
+          <label for="{{ form.description.id_for_label }}">THE TALE OF THE QUEST</label>
+          {{ form.description }}
+          <p class="drawer-hint">Optional. What must be done, and how — shown when the quest is opened.</p>
+          <div data-errors-for="description">{{ form.description.errors }}</div>
+        </div>
+        <div class="drawer-field">
           <label class="drawer-check">
             {{ form.is_optional }}
             <span>A SIDE QUEST — OPTIONAL PATH</span>
@@ -52,7 +58,7 @@
         <div class="drawer-field">
           <label for="{{ form.prerequisite_quests.id_for_label }}">SEALED UNTIL THESE ARE CONQUERED</label>
           {{ form.prerequisite_quests }}
-          <p class="drawer-hint">Hold Ctrl to pick several, or none at all.</p>
+          <p class="drawer-hint">Tick any that must fall first — or none at all.</p>
           <div data-errors-for="prerequisite_quests">{{ form.prerequisite_quests.errors }}</div>
         </div>
       </div>

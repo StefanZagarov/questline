@@ -32,9 +32,13 @@ class Questline(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return self.title
+
 
 class Quest(models.Model):
     title = models.CharField(max_length=100)
+    description = models.TextField(max_length=99999, blank=True)
     is_optional = models.BooleanField(default=False)
     coord_x = models.FloatField(default=0)
     coord_y = models.FloatField(default=0)
@@ -47,5 +51,32 @@ class Quest(models.Model):
         "self", symmetrical=False, blank=True, related_name="unlocks"
     )
 
+    def __str__(self):
+        return self.title
 
-# class Objective(models.Model):
+
+class Objective(models.Model):
+    class Meta:
+        ordering = ["order"]
+
+    quest = models.ForeignKey(
+        Quest, related_name="objectives", on_delete=models.CASCADE
+    )
+    order = models.PositiveIntegerField(default=0)
+    title = models.CharField(max_length=100)
+    description = models.TextField(max_length=99999, blank=True)
+    objective_type = models.CharField(max_length=100, editable=False)
+
+    def save(self):
+        self.objective_type = self._meta.model_name
+        super().save(*args, **kwargs)
+
+
+class SliderObjective(Objective):
+    min_value = models.IntegerField(default=0)
+    max_value = models.IntegerField(default=100)
+    target_value = models.IntegerField(default=50)
+
+
+class ChecklistObjective(Objective):
+    pass
