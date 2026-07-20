@@ -61,6 +61,98 @@
           <p class="drawer-hint">Tick any that must fall first — or none at all.</p>
           <div data-errors-for="prerequisite_quests">{{ form.prerequisite_quests.errors }}</div>
         </div>
+        <div class="drawer-field">
+          <label>THE TRIALS OF THE QUEST</label>
+          <p class="drawer-hint">Each objective is a step to conquer. Add as many as the quest demands.</p>
+          {% comment %}
+            Empty on load. JS clones a <template> below into here per button click,
+            and reads these rows back into JSON at submit. data-* is the contract:
+              [data-objective-list]  — where rows live
+              .objective-row[data-type] — one objective; data-type is the receipt
+              [data-field="X"]        — an input whose value maps to JSON key X
+              [data-remove-objective] — the row's delete button
+          {% endcomment %}
+          <div class="objective-list" data-objective-list></div>
+          <div class="objective-add">
+            <button type="button"
+                    class="objective-add-btn"
+                    data-add-objective="checklistobjective">+ CHECKBOX</button>
+            <button type="button"
+                    class="objective-add-btn"
+                    data-add-objective="sliderobjective">+ SLIDER</button>
+          </div>
+          <div data-errors-for="objectives_data"></div>
+        </div>
+        {% comment %}
+          Row blueprints. <template> content is inert — not rendered, not submitted —
+          until JS clones it with .content.cloneNode(true) and appends the clone into
+          [data-objective-list]. order is NOT a field here; JS computes it from row
+          position at submit time.
+        {% endcomment %}
+        <template data-row-template="checklistobjective">
+          <div class="objective-row" data-type="checklistobjective">
+            <div class="objective-row-head">
+              <span class="objective-row-kind">☑ CHECKBOX</span>
+              <button type="button"
+                      class="objective-row-del"
+                      data-remove-objective
+                      aria-label="Remove">✕</button>
+            </div>
+            <label class="objective-field">
+              <span>TITLE</span>
+              <input type="text" data-field="title" placeholder="What must be done?">
+            </label>
+            <details class="objective-detail" open>
+              <summary>DETAIL — INSTRUCTIONS</summary>
+              <textarea data-field="description"
+                        placeholder="What must be done, and how — the long version. Optional."></textarea>
+            </details>
+          </div>
+        </template>
+        <template data-row-template="sliderobjective">
+          <div class="objective-row" data-type="sliderobjective">
+            <div class="objective-row-head">
+              <span class="objective-row-kind">◧ SLIDER</span>
+              <button type="button"
+                      class="objective-row-del"
+                      data-remove-objective
+                      aria-label="Remove">✕</button>
+            </div>
+            <label class="objective-field">
+              <span>TITLE</span>
+              <input type="text" data-field="title" placeholder="What must be tracked?">
+            </label>
+            <details class="objective-detail" open>
+              <summary>DETAIL — INSTRUCTIONS</summary>
+              <textarea data-field="description"
+                        placeholder="What must be done, and how — the long version. Optional."></textarea>
+            </details>
+            <div class="objective-row-nums">
+              <label class="objective-field">
+                <span>MIN</span>
+                <input type="number" data-field="min_value" value="0">
+              </label>
+              <label class="objective-field">
+                <span>MAX</span>
+                <input type="number" data-field="max_value" value="100">
+              </label>
+              <label class="objective-field">
+                <span>GOAL</span>
+                <input type="number" data-field="target_value" value="50">
+              </label>
+            </div>
+          </div>
+        </template>
+        {% comment %}
+          The envelope for the objectives list. JS fills this input's value with a
+          JSON string built from the objective rows just before submit; the view
+          reads request.POST["objectives_data"] and json.loads() it. Empty until
+          then — it carries nothing on its own.
+          Essentially: adding an objective spawns scratch fields. On submit, JS
+          reads those fields and writes them into this hidden input as one JSON
+          string, and the form sends that string along like any other value.
+        {% endcomment %}
+        <input type="hidden" name="objectives_data" id="id_objectives_data">
       </div>
       <div class="drawer-actions">
         <button class="drawer-btn drawer-btn-quiet" type="button" data-close-drawer>CANCEL</button>

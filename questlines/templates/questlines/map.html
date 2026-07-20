@@ -5,7 +5,8 @@
         href="{% static 'questlines/css/questline-map.css' %}">
 {% endblock %}
 {% block extra_js %}
-  <script src="{% static 'questlines/js/quest-drawer.js'%}" defer></script>
+  <script src="{% static 'questlines/js/map.js'%}" type="module" defer></script>
+  <script src="{% static 'questlines/js/quest-drawer.js'%}" type="module" defer></script>
 {% endblock %}
 {% block topbar %}
   <header class="topbar">
@@ -94,6 +95,7 @@
                       data-title="{{ quest.title }}"
                       data-description="{{ quest.description }}"
                       data-optional="{{ quest.is_optional|yesno:'1,0' }}"
+                      data-objectives="{{ quest.objectives_json }}"
                       title="Edit this quest"
                       aria-label="Edit quest">✎</button>
               <button class="qcard-action qcard-action-danger"

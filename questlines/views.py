@@ -5,6 +5,7 @@ from django.urls import reverse_lazy
 from django.views import generic as views
 
 from questlines.forms import CreateQuestlineForm, MoveQuestForm, QuestForm
+from questlines.mixins import ObjectiveSaveMixin
 from questlines.models import Quest, Questline
 
 # The quest views are AJAX-only: the map's drawer POSTs to them and they answer
@@ -45,7 +46,7 @@ class DetailQuestlineView(LoginRequiredMixin, views.DetailView):
         return Questline.objects.filter(author=self.request.user)
 
 
-class CreateQuestView(LoginRequiredMixin, views.CreateView):
+class CreateQuestView(LoginRequiredMixin, ObjectiveSaveMixin, views.CreateView):
     model = Quest
     form_class = QuestForm
     template_name = "questlines/quest-create.html"
@@ -59,7 +60,9 @@ class CreateQuestView(LoginRequiredMixin, views.CreateView):
 
         # Not super().form_valid() — that saves AND redirects; we only want the save.
         self.object = form.save()  # ModelForm.save() writes the M2M rows too
+        self.save_objectives(self.object)
 
+        # The reply the view sends back to a JS fetch() call when a quest is created — because this endpoint is hit by AJAX, not a normal form POST. (currently the returned body is thrown away from JS since the page reloads when the 201 is received)
         return JsonResponse(
             {
                 "id": self.object.pk,
@@ -84,7 +87,7 @@ class CreateQuestView(LoginRequiredMixin, views.CreateView):
         return kwargs
 
 
-class EditQuestView(LoginRequiredMixin, views.UpdateView):
+class EditQuestView(LoginRequiredMixin, ObjectiveSaveMixin, views.UpdateView):
     model = Quest
     form_class = QuestForm
 
@@ -99,6 +102,7 @@ class EditQuestView(LoginRequiredMixin, views.UpdateView):
 
     def form_valid(self, form):
         self.object = form.save()  # UpdateView already attached the instance
+        self.save_objectives(self.object)
 
         return JsonResponse(
             {

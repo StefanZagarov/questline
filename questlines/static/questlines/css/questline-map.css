@@ -564,6 +564,9 @@
   /* ≈ five rows (22px box + 12px row padding), then scroll */
   max-height: 170px;
   overflow-y: auto;
+  /* just a border — no fill, so it doesn't read as another input field */
+  border: 3px solid var(--ink);
+  padding: 4px 12px;
 }
 #id_prerequisite_quests label {
   display: flex;
@@ -610,12 +613,22 @@
   outline-offset: 1px;
 }
 
-/* checkbox row: label wraps the box, so the whole line is a hit target */
+/* the optional toggle, boxed as a distinct setting so it doesn't blend into the
+   parchment. label wraps the box, so the whole card is a hit target. */
 .drawer-check {
   display: flex;
   align-items: center;
   gap: 10px;
   cursor: pointer;
+  padding: 12px 14px;
+  background: var(--card);
+  /* dashed to echo how optional quests render dashed on the map */
+  border: 3px dashed var(--ink);
+}
+/* lit up when the setting is on — :has lets the box react to its own checkbox */
+.drawer-check:has(input:checked) {
+  border-color: var(--gold);
+  background: var(--card-2);
 }
 .drawer-check input[type="checkbox"] {
   width: 20px;
@@ -629,6 +642,184 @@
   font-size: 11px;
   letter-spacing: 2px;
   color: var(--gold-dim);
+}
+
+/* ---- objectives authoring ---- */
+.objective-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.objective-list:not(:empty) {
+  margin-bottom: 12px;
+}
+
+/* each drafted objective is a card on the parchment */
+.objective-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--card);
+  border: 3px solid var(--ink);
+  box-shadow: 3px 3px 0 rgba(58, 44, 21, 0.25);
+}
+
+/* kind badge on the left, remove button pinned to the right */
+.objective-row-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.objective-row-kind {
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--gold-dim);
+}
+
+/* ✕ — same pixel button as the map card actions, danger on hover */
+.objective-row-del {
+  flex-shrink: 0; /* never squashed; keeps its square as the row fills */
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--ink);
+  background: var(--card-2);
+  border: 2px solid var(--ink);
+  box-shadow: 2px 2px 0 rgba(58, 44, 21, 0.35);
+  cursor: pointer;
+  padding: 0;
+}
+.objective-row-del:hover {
+  background: #a1341f; /* same danger red as the delete-quest button */
+  color: #f0e2bc;
+}
+.objective-row-del:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0 0 0 rgba(58, 44, 21, 0.35);
+}
+
+/* row inputs a touch tighter than the drawer's, since rows stack */
+.objective-row input[type="text"] {
+  padding: 8px 10px;
+  font-size: 14px;
+}
+
+/* a captioned field: the pixel label sits on the <span>, so the input below it
+   stays the body serif (font-family: inherit would otherwise pull the pixel font).
+   Used for title/detail and each slider number. */
+.objective-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.objective-field > span {
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--gold-dim);
+}
+
+/* collapsible description — native <details>, no JS. Instructions can run long,
+   so they stay folded until the summary is clicked. */
+.objective-detail > summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  list-style: none; /* drop the browser's default disclosure triangle */
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--gold-dim);
+  cursor: pointer;
+  padding: 2px 0;
+}
+.objective-detail > summary::-webkit-details-marker {
+  display: none; /* Safari's native marker */
+}
+/* our own chevron, rotates to point down when the section is open */
+.objective-detail > summary::before {
+  content: "▸";
+  font-size: 12px;
+  transition: transform 0.15s ease;
+}
+.objective-detail[open] > summary::before {
+  transform: rotate(90deg);
+}
+.objective-detail > summary:hover {
+  color: var(--gold-deep);
+}
+.objective-detail[open] > summary {
+  margin-bottom: 6px;
+}
+.objective-detail textarea {
+  width: 100%;
+  min-height: 110px;
+  resize: vertical; /* grow down for long instructions; sideways breaks the row */
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  padding: 8px 10px;
+  font-size: 14px;
+  color: var(--ink);
+  font-family: inherit;
+}
+
+/* slider's min / max / goal — three captioned columns sharing the width */
+.objective-row-nums {
+  display: flex;
+  gap: 10px;
+}
+.objective-row-nums .objective-field {
+  flex: 1;
+}
+.objective-row-nums input[type="number"] {
+  width: 100%;
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  padding: 8px 10px;
+  font-size: 14px;
+  color: var(--ink);
+  font-family: inherit;
+  /* strip the native grey spinner arrows so the box matches the theme */
+  appearance: none;
+  -moz-appearance: textfield;
+}
+.objective-row-nums input[type="number"]::-webkit-inner-spin-button,
+.objective-row-nums input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.objective-add {
+  display: flex;
+  gap: 10px;
+}
+/* Same silhouette as .map-tool-primary (+ Add Quest), painted green. */
+.objective-add-btn {
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--paper);
+  background: var(--green);
+  border: 2px solid var(--ink);
+  box-shadow: 3px 3px 0 rgba(58, 44, 21, 0.25);
+  padding: 8px 13px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.objective-add-btn:hover {
+  background: var(--green-2);
+}
+.objective-add-btn:active {
+  transform: translate(2px, 2px); /* the same press as the map tools */
+  box-shadow: 1px 1px 0 rgba(58, 44, 21, 0.25);
 }
 
 .drawer-errors:empty {
