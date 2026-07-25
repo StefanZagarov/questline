@@ -8,8 +8,15 @@ const SVG_NS = "http://www.w3.org/2000/svg";
 // How far the curve pulls straight out of each edge before bending.
 const EDGE_CURVE = 60;
 // Breathing room a card keeps from the border, all four sides. Must be >= the 10px
-// .qcard-actions overhang in questline-map.css, or its buttons cross the edge.
+// .qcard-actions overhang in map-edit.css, or its buttons cross the edge.
 const CARD_GUTTER = 10;
+// px of travel before a press counts as a drag, not a click
+const DRAG_THRESHOLD = 4;
+
+function viewQuest(questId) {
+  const drawer = document.getElementById(`preview-${questId}`);
+  drawer.showModal();
+}
 
 // The point on `box`'s edge that faces `other`, plus which way that edge faces.
 function anchor(box, other) {
@@ -83,11 +90,18 @@ function drawEdges() {
 let draggedGroup = null;
 let grabX = 0;
 let grabY = 0;
+let dragged = false;
+let pressX = 0;
+let pressY = 0;
 
 document.querySelectorAll(".qgroup").forEach((group) => {
   group.addEventListener("pointerdown", (event) => {
     if (event.target.closest("button")) return;
     event.preventDefault(); // .qcard is an <a> — stops the native drag ghost
+
+    dragged = false;
+    pressX = event.clientX;
+    pressY = event.clientY;
 
     const rectangle = group.getBoundingClientRect(); // viewport coords, like clientX/Y
 
@@ -102,6 +116,15 @@ document.querySelectorAll(".qgroup").forEach((group) => {
 
   group.addEventListener("pointermove", (event) => {
     if (draggedGroup === null) return; // hover, not a drag
+
+    if (!dragged) {
+      const dx = event.clientX - pressX;
+      const dy = event.clientY - pressY;
+
+      if (Math.hypot(dx, dy) > DRAG_THRESHOLD) {
+        dragged = true;
+      }
+    }
 
     // pointer − canvas position − grab = the card's left/top inside the canvas.
     // Rect is read live, so a scrolled canvas needs no correction.
@@ -133,12 +156,18 @@ document.querySelectorAll(".qgroup").forEach((group) => {
   });
 
   // The drag is only visual until here — the DB still holds the old coords.
-  group.addEventListener("pointerup", async () => {
+  group.addEventListener("pointerup", async (element) => {
     if (!draggedGroup) return;
 
+    const wasDrag = dragged; // read before anything resets
     const moved = draggedGroup; // keep the reference; await outlives the flag
     draggedGroup = null;
     moved.classList.remove("is-dragging");
+
+    if (!wasDrag) {
+      viewQuest(moved.dataset.questId);
+      return;
+    }
 
     // When cursor releases, make a form with the x and y coordinates of the dragged card to send to the BE so they can be stored in the database, surviving reloads and app restarts
     const body = new FormData(); // no form to read, so build one
@@ -167,6 +196,20 @@ document.querySelectorAll(".qgroup").forEach((group) => {
 
     draggedGroup.classList.remove("is-dragging");
     draggedGroup = null;
+  });
+});
+
+document.querySelectorAll(".quest-preview").forEach((dialog) => {
+  // ✕ button — <a href="#">, so stop the fragment nav, then close.
+  dialog.querySelector(".preview-close").addEventListener("click", (e) => {
+    e.preventDefault();
+    dialog.close();
+  });
+
+  // Backdrop click: showModal() reports a ::backdrop hit as target === the dialog
+  // itself; a click on .preview-panel targets a child, so this only fires outside.
+  dialog.addEventListener("click", (e) => {
+    if (e.target === dialog) dialog.close();
   });
 });
 

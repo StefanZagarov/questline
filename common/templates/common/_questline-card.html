@@ -1,0 +1,23 @@
+{% comment %}
+  One questline card on the home page. Rendered by each status section in
+  home-page.html via {% include %}.
+
+  Params (passed on the include's `with`):
+    questline  — the Questline to show
+    cta        — button label text (e.g. "▶ OPEN THE MAP")
+    cta_style  — extra button class (cta-gold / cta-quiet / cta-dark)
+
+  No progress bar or enrollment badge here: progress is per-(user, enrollment),
+  not a property of the map itself, so it arrives with the progress models.
+{% endcomment %}
+<article class="ql-card">
+  <div class="ql-card-top">
+    <div class="ql-tag">{{ questline.category }}</div>
+  </div>
+  <h3 class="ql-title">{{ questline.title }}</h3>
+  <p class="ql-desc">{{ questline.description }}</p>
+  <div class="mini-bar-labels">
+    <span>{{ questline.quests.count }} QUEST{{ questline.quests.count|pluralize }}</span>
+  </div>
+  <a class="ql-cta {{ cta_style }}" href="{% url 'map-edit' questline.pk %}">{{ cta }}</a>
+</article>

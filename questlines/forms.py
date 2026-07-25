@@ -3,6 +3,11 @@ from django import forms
 from questlines.models import Quest, Questline
 
 
+# Rewrite the default message for the clear uploaded file label
+class CoverInput(forms.ClearableFileInput):
+    clear_checkbox_label = "Clear on save"
+
+
 class CreateQuestlineForm(forms.ModelForm):
     class Meta:
         model = Questline
@@ -15,6 +20,7 @@ class CreateQuestlineForm(forms.ModelForm):
             "difficulty",
             "cover_image",
         ]
+        widgets = {"cover_image": CoverInput}
 
 
 # Serves both create and edit — a ModelForm doesn't know the difference; it just

@@ -22,16 +22,6 @@
         <div class="kicker">✎ CHARTING THE MAP</div>
         <div class="quest-name">{{ questline.title }}</div>
       </div>
-      {# hardcoded until Enrollment/ObjectiveProgress exist #}
-      <div class="topbar-progress">
-        <div class="bar-labels">
-          <span data-hud-count>1 / 6 QUESTS</span>
-          <span data-hud-pct>17%</span>
-        </div>
-        <div class="bar-track">
-          <div class="bar-fill" data-hud-bar style="width: 17%;"></div>
-        </div>
-      </div>
       <div class="topbar-actions">
         <div class="lv-badge" data-lv>LV 3</div>
         <form method="POST" action="{% url 'logout' %}">
@@ -69,6 +59,10 @@
       <div class="map-toolbar">
         {# a button, not a link: it acts on this page rather than navigating #}
         <button class="map-tool map-tool-primary" type="button" data-open-drawer>+ ADD QUEST</button>
+        <a class="map-tool map-tool-primary"
+           type="button"
+           href="{% url 'questline-edit' questline.pk %}">~ EDIT QUESTLINE
+        </a>
         <span class="map-toolbar-sep"></span>
         <span class="map-toolbar-count" data-quest-count>{{ questline.quests.count }} quest{{ questline.quests.count|pluralize }}</span>
       </div>
@@ -112,7 +106,7 @@
             {% endcomment %}
             <a class="qcard qcard-draft{% if quest.is_optional %} qcard-optional{% endif %}"
                draggable="false"
-               href="#">
+               href="#preview-{{ quest.pk }}">
               {% if quest.is_optional %}<div class="optional-flag">OPTIONAL PATH</div>{% endif %}
               <div class="crumb">
                 {% if quest.is_optional %}
@@ -138,4 +132,12 @@
   </main>
   {# renders inline, with this page's context — a text split, not a routing one #}
   {% include 'questlines/_quest-drawer.html' %}
+  {% comment %}
+    One read-only preview panel per quest, pre-rendered and toggled by CSS :target
+    (the card links to #preview-<pk>). Kept OUTSIDE <main> so each panel's
+    position:fixed anchors to the viewport, not to a positioned ancestor.
+  {% endcomment %}
+  {% for quest in questline.quests.all %}
+    {% include 'questlines/_quest-preview.html' with quest=quest index=forloop.counter total=questline.quests.count %}
+  {% endfor %}
 {% endblock %}

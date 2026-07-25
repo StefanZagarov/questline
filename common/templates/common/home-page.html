@@ -10,91 +10,106 @@
   <div class="page">
     <h1 class="hero-title">WELCOME BACK, {{ user.username }}</h1>
     <p class="hero-sub">Pick up where you left off</p>
-    <h2 class="section-title">✦ YOUR QUESTLINES</h2>
-    <div class="ql-grid">
-      {% for questline in questline_list %}
+    {% comment %}
+      Three sections, one per status, all owned by the current user. The view
+      partitions a single owner-scoped queryset into drafts / private / published
+      (see HomePageView.get_context_data). Each header shows even when its section
+      is empty — that's why Option A / three querysets, not {% templatetag openblock %} regroup {% templatetag closeblock %}.
+      _questline-card.html renders one card; only the Drafts grid carries the
+      "chart a new map" tile, since a new map is born a draft.
+    {% endcomment %}
+    <section class="ql-section">
+      <h2 class="section-title">★ PUBLISHED</h2>
+      <div class="ql-grid">
+        {% for questline in published %}
+          {% include 'common/_questline-card.html' with questline=questline cta='▶ OPEN THE MAP' cta_style='cta-quiet' %}
+        {% empty %}
+          <p class="empty-note">None published yet — publish a map to let others discover it.</p>
+        {% endfor %}
+        {# TODO: hardcoded demo cards — remove once real published maps exist. #}
         <article class="ql-card">
           <div class="ql-card-top">
-            <div class="ql-tag">{{ questline.category }}</div>
-            <div class="badge badge-progress">WIP (USER ENROLLMENT STATE)</div>
+            <div class="ql-tag">CAREER PATH</div>
+            <div class="badge badge-progress">⚑ IN PROGRESS</div>
           </div>
-          <h3 class="ql-title">{{ questline.title }}</h3>
-          <p class="ql-desc">{{ questline.description }}</p>
+          <h3 class="ql-title">BACKEND DEVELOPER</h3>
+          <p class="ql-desc">
+            From “what is DNS” to shipping containers to production. Six quests and one optional detour through the terminal.
+          </p>
           <div>
             <div class="mini-bar-labels">
-              <span data-home-count>(WIP:)1 / 6 QUESTS</span><span data-home-pct>17%</span>
+              <span data-home-count>1 / 6 QUESTS</span><span data-home-pct>17%</span>
             </div>
             <div class="mini-bar-track">
               <div class="bar-fill" data-home-bar style="width: 17%;"></div>
             </div>
           </div>
-          <a class="ql-cta cta-gold" href="{% url 'questline-map' questline.pk %}">▶ CONTINUE THE QUEST</a>
+          <a class="ql-cta cta-gold" href="#">▶ CONTINUE THE QUEST</a>
         </article>
-      {% empty %}
-        <p class="empty-note">No questlines charted yet — start by charting a new map.</p>
-      {% endfor %}
-      <article class="ql-card">
-        <div class="ql-card-top">
-          <div class="ql-tag">CAREER PATH</div>
-          <div class="badge badge-progress">⚑ IN PROGRESS</div>
-        </div>
-        <h3 class="ql-title">BACKEND DEVELOPER</h3>
-        <p class="ql-desc">
-          From “what is DNS” to shipping containers to production. Six quests and one optional detour through the terminal.
-        </p>
-        <div>
-          <div class="mini-bar-labels">
-            <span data-home-count>1 / 6 QUESTS</span><span data-home-pct>17%</span>
+        <article class="ql-card">
+          <div class="ql-card-top">
+            <div class="ql-tag">SKILL TREE</div>
+            <div class="badge badge-done">★ CONQUERED</div>
           </div>
-          <div class="mini-bar-track">
-            <div class="bar-fill" data-home-bar style="width: 17%;"></div>
+          <h3 class="ql-title">SQL MASTERY</h3>
+          <p class="ql-desc">
+            Joins, window functions, indexes, and reading query plans without flinching. Conquered last spring.
+          </p>
+          <div>
+            <div class="mini-bar-labels">
+              <span>5 / 5 QUESTS</span><span>100%</span>
+            </div>
+            <div class="mini-bar-track">
+              <div class="bar-fill" style="width: 100%;"></div>
+            </div>
           </div>
-        </div>
-        <a class="ql-cta cta-gold" href="map.html">▶ CONTINUE THE QUEST</a>
-      </article>
-      <article class="ql-card">
-        <div class="ql-card-top">
-          <div class="ql-tag">SKILL TREE</div>
-          <div class="badge badge-done">★ CONQUERED</div>
-        </div>
-        <h3 class="ql-title">SQL MASTERY</h3>
-        <p class="ql-desc">
-          Joins, window functions, indexes, and reading query plans without flinching. Conquered last spring.
-        </p>
-        <div>
-          <div class="mini-bar-labels">
-            <span>5 / 5 QUESTS</span><span>100%</span>
+          <a class="ql-cta cta-quiet" href="#">↺ REVISIT THE MAP</a>
+        </article>
+        <article class="ql-card">
+          <div class="ql-card-top">
+            <div class="ql-tag">CAREER PATH</div>
+            <div class="badge badge-idle">◇ NOT STARTED</div>
           </div>
-          <div class="mini-bar-track">
-            <div class="bar-fill" style="width: 100%;"></div>
+          <h3 class="ql-title">FRONTEND DEVELOPER</h3>
+          <p class="ql-desc">
+            HTML, CSS, JavaScript, and a framework of your choosing. The map is drawn; the first step untaken.
+          </p>
+          <div>
+            <div class="mini-bar-labels">
+              <span>0 / 8 QUESTS</span><span>0%</span>
+            </div>
+            <div class="mini-bar-track">
+              <div class="bar-fill" style="width: 0%;"></div>
+            </div>
           </div>
-        </div>
-        <a class="ql-cta cta-quiet" href="#">↺ REVISIT THE MAP</a>
-      </article>
-      <article class="ql-card">
-        <div class="ql-card-top">
-          <div class="ql-tag">CAREER PATH</div>
-          <div class="badge badge-idle">◇ NOT STARTED</div>
-        </div>
-        <h3 class="ql-title">FRONTEND DEVELOPER</h3>
-        <p class="ql-desc">
-          HTML, CSS, JavaScript, and a framework of your choosing. The map is drawn; the first step untaken.
-        </p>
-        <div>
-          <div class="mini-bar-labels">
-            <span>0 / 8 QUESTS</span><span>0%</span>
-          </div>
-          <div class="mini-bar-track">
-            <div class="bar-fill" style="width: 0%;"></div>
-          </div>
-        </div>
-        <a class="ql-cta cta-dark" href="#">⚐ SET FORTH</a>
-      </article>
-      <a class="ql-new" href="{% url 'questline-create' %}">
-        <div class="plus">+</div>
-        <div class="label">CHART A NEW MAP</div>
-        <div class="hint">turn any goal into a questline</div>
-      </a>
-    </div>
+          <a class="ql-cta cta-dark" href="#">⚐ SET FORTH</a>
+        </article>
+      </div>
+    </section>
+    <section class="ql-section">
+      <h2 class="section-title">◈ PRIVATE</h2>
+      <div class="ql-grid">
+        {% for questline in private %}
+          {% include 'common/_questline-card.html' with questline=questline cta='▶ OPEN THE MAP' cta_style='cta-gold' %}
+        {% empty %}
+          <p class="empty-note">Nothing private yet — private maps are playable but unlisted.</p>
+        {% endfor %}
+      </div>
+    </section>
+    <section class="ql-section">
+      <h2 class="section-title">✎ DRAFTS</h2>
+      <div class="ql-grid">
+        {% for questline in drafts %}
+          {% include 'common/_questline-card.html' with questline=questline cta='▶ OPEN THE MAP' cta_style='cta-gold' %}
+        {% empty %}
+          <p class="empty-note">No drafts in progress.</p>
+        {% endfor %}
+        <a class="ql-new" href="{% url 'questline-create' %}">
+          <div class="plus">+</div>
+          <div class="label">CHART A NEW MAP</div>
+          <div class="hint">turn any goal into a questline</div>
+        </a>
+      </div>
+    </section>
   </div>
 {% endblock %}

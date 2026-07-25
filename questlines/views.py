@@ -1,7 +1,7 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.views import generic as views
 
 from questlines.forms import CreateQuestlineForm, MoveQuestForm, QuestForm
@@ -26,9 +26,9 @@ class CreateQuestlineView(LoginRequiredMixin, views.CreateView):
         return super().form_valid(form)
 
 
-class DetailQuestlineView(LoginRequiredMixin, views.DetailView):
+class EditMapView(LoginRequiredMixin, views.DetailView):
     model = Questline
-    template_name = "questlines/map.html"
+    template_name = "questlines/map-edit.html"
 
     # A DetailView supplies the questline but knows nothing about forms, and the map
     # carries the add-quest drawer — so we add a blank one ourselves.
@@ -44,6 +44,18 @@ class DetailQuestlineView(LoginRequiredMixin, views.DetailView):
     # TODO: becomes "mine OR published" once publishing exists.
     def get_queryset(self):
         return Questline.objects.filter(author=self.request.user)
+
+
+class EditQuestlineView(LoginRequiredMixin, views.UpdateView):
+    model = Questline
+    form_class = CreateQuestlineForm
+    template_name = "questlines/questline-create.html"
+
+    def get_queryset(self):
+        return Questline.objects.filter(author=self.request.user)
+
+    def get_success_url(self):
+        return reverse("map-edit", kwargs={"pk": self.object.pk})
 
 
 class CreateQuestView(LoginRequiredMixin, ObjectiveSaveMixin, views.CreateView):
@@ -85,6 +97,10 @@ class CreateQuestView(LoginRequiredMixin, ObjectiveSaveMixin, views.CreateView):
         kwargs = super().get_form_kwargs()
         kwargs["questline_pk"] = self.kwargs["pk"]  # keyword-only: name must match
         return kwargs
+
+
+# class DetailsQuestView(LoginRequiuredMixin, views.ListView):
+#     model= Quest
 
 
 class EditQuestView(LoginRequiredMixin, ObjectiveSaveMixin, views.UpdateView):

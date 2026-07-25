@@ -34,6 +34,12 @@
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 24px;
 }
+/* The note is a lone grid item — span every column so it can center across the
+   whole row instead of sitting in column 1. */
+.empty-note {
+  grid-column: 1 / -1;
+  text-align: center;
+}
 .ql-card {
   background: var(--card);
   border: 3px solid var(--ink);

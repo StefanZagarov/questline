@@ -15,8 +15,9 @@ class Questline(models.Model):
         MEDIUM = "medium", "Medium"
         HARD = "hard", "Hard"
 
-    class Visibility(models.TextChoices):
+    class Status(models.TextChoices):
         DRAFT = "draft", "Draft"
+        PRIVATE = "private", "Private"
         PUBLISHED = "published", "Published"
 
     title = models.CharField(max_length=100)
@@ -29,8 +30,8 @@ class Questline(models.Model):
         upload_to="covers", validators=(validate_image_size,), blank=True, null=True
     )
     author = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    visibility = models.CharField(
-        max_length=9, choices=Visibility.choices, default=Visibility.DRAFT
+    status = models.CharField(
+        max_length=9, choices=Status.choices, default=Status.DRAFT
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -42,6 +43,7 @@ class Quest(models.Model):
     title = models.CharField(max_length=100)
     description = models.TextField(max_length=99999, blank=True)
     is_optional = models.BooleanField(default=False)
+    note = models.TextField(max_length=99999, blank=True)
     coord_x = models.FloatField(default=0)
     coord_y = models.FloatField(default=0)
     # related_name - makes questline.quest_set to read as quests
@@ -53,16 +55,18 @@ class Quest(models.Model):
         "self", symmetrical=False, blank=True, related_name="unlocks"
     )
 
+    # This is used in map.html: data-objectives="{{ quest.objectives_json }}"
+    @property
+    def objectives_json(self):
+        return json.dumps(self.objectives_preview)
+
     # This is quest's objectives as a JSON string, for the edit drawer to prefill from.
     # The pen renders it into data-objectives on the edit button (see map.html), and
     # quest-drawer.js JSON.parses it to rebuild the rows — the exact same shape the JS
     # packs on submit, so the round-trip is symmetric.
-    #
     # A @property so templates can call {{ quest.objectives_json }} with no view wiring.
-    #
-    # This is used in map.html: data-objectives="{{ quest.objectives_json }}"
     @property
-    def objectives_json(self):
+    def objectives_preview(self):
         data = []
         for objective in self.objectives.all():
             entry = {
@@ -77,7 +81,7 @@ class Quest(models.Model):
                 entry["max_value"] = slider.max_value
                 entry["target_value"] = slider.target_value
             data.append(entry)
-        return json.dumps(data)
+        return data
 
     def __str__(self):
         return self.title

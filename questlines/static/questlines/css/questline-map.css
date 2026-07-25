@@ -523,7 +523,7 @@
 .drawer-field::before {
   content: "";
   position: absolute;
-  left: -29px;
+  left: -30px;
   top: 3px;
   width: 12px;
   height: 12px;
@@ -907,4 +907,248 @@
   font-size: 15px;
   font-style: italic;
   color: var(--muted);
+}
+
+/* ============ QUEST PREVIEW — read-only ============ */
+/* A native <dialog>, opened with showModal(); the visible box is .preview-panel,
+   so the dialog element itself is a transparent no-op wrapper (no UA chrome). */
+.quest-preview {
+  border: none;
+  padding: 0;
+  background: transparent;
+  max-width: none;
+  max-height: none;
+}
+.quest-preview::backdrop {
+  background: rgba(20, 16, 10, 0.55);
+}
+.preview-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 480px;
+  max-width: 92vw;
+  background: var(--card);
+  border-left: 4px solid var(--ink);
+  box-shadow: -10px 0 30px rgba(20, 16, 10, 0.35);
+  z-index: 70;
+  overflow-y: auto;
+  padding: 26px 30px 44px;
+  animation: drawerIn 0.25s ease-out;
+}
+.preview-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.preview-crumb {
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--gold-deep);
+}
+.optional-badge {
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 11px;
+  letter-spacing: 1px;
+  padding: 3px 9px;
+  border: 2px dashed var(--muted-2);
+  color: var(--muted-2);
+}
+.preview-close {
+  margin-left: auto;
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--ink);
+  background: var(--card-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 15px;
+  color: var(--ink);
+  text-decoration: none;
+  box-shadow: 3px 3px 0 rgba(58, 44, 21, 0.3);
+}
+.preview-close:hover {
+  background: var(--gold-bright);
+  color: var(--ink);
+}
+.preview-title {
+  margin: 0 0 10px;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 30px;
+  font-weight: 400;
+  letter-spacing: 1px;
+  color: var(--ink);
+  text-shadow: 2px 2px 0 rgba(201, 150, 46, 0.3);
+}
+.preview-body {
+  margin: 0 0 8px;
+  font-size: 17px;
+  color: var(--ink);
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+.prereq-line {
+  font-size: 14px;
+  color: var(--muted);
+}
+.prereq-line strong {
+  font-weight: 600;
+  color: var(--ink);
+}
+.obj-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin: 22px 0 12px;
+}
+.obj-heading h3 {
+  margin: 0;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 2px;
+  color: var(--ink);
+}
+.obj-count {
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 13px;
+  color: var(--gold-deep);
+}
+.obj-empty {
+  font-size: 15px;
+  font-style: italic;
+  color: var(--muted);
+}
+.obj-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.obj-item {
+  border: 2px solid #decfa6;
+  background: #fbf4e2;
+}
+.obj-item .row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+/* task (checkbox) */
+.obj-check {
+  padding: 11px 14px;
+}
+.obj-check .box {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border: 3px solid var(--ink);
+  background: var(--paper);
+}
+.obj-check .obj-label {
+  font-size: 17px;
+  flex: 1;
+  color: var(--ink);
+}
+.obj-kind {
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--sand);
+}
+/* meter (slider) */
+.obj-slider {
+  padding: 12px 14px 10px;
+}
+.obj-slider .row {
+  align-items: baseline;
+  margin-bottom: 2px;
+}
+.obj-slider .obj-label {
+  font-size: 17px;
+  color: var(--ink);
+  flex: 1;
+}
+.obj-slider .val {
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 15px;
+  color: var(--gold-deep);
+}
+.target-hint {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.target-hint strong {
+  font-weight: 700;
+  color: var(--gold-deep);
+}
+input[type="range"].ql-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 16px;
+  background: transparent;
+  width: 100%;
+  margin: 6px 0;
+}
+input[type="range"].ql-slider::-webkit-slider-runnable-track {
+  height: 14px;
+  background: #e7d8b4;
+  border: 2px solid var(--ink);
+}
+input[type="range"].ql-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  margin-top: -6px;
+  background: var(--gold);
+  border: 3px solid var(--ink);
+  box-shadow: 2px 2px 0 rgba(58, 44, 21, 0.4);
+  border-radius: 0;
+}
+input[type="range"].ql-slider::-moz-range-track {
+  height: 14px;
+  background: #e7d8b4;
+  border: 2px solid var(--ink);
+  box-sizing: border-box;
+}
+input[type="range"].ql-slider::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  background: var(--gold);
+  border: 3px solid var(--ink);
+  border-radius: 0;
+}
+/* collapsible per-objective instructions — closed by default in the preview */
+.obj-detail {
+  margin: 6px 0 2px;
+}
+.obj-detail > summary {
+  list-style: none;
+  cursor: pointer;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--gold-deep);
+}
+.obj-detail > summary::-webkit-details-marker {
+  display: none;
+}
+.obj-detail > summary::before {
+  content: "▸ ";
+  display: inline-block;
+  transition: transform 0.15s ease;
+}
+.obj-detail[open] > summary::before {
+  transform: rotate(90deg);
+}
+.obj-detail p {
+  margin: 6px 0 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--ink);
 }

@@ -4,7 +4,9 @@
    waypoint on a dashed quest-route. */
 
 .forge {
-  min-height: calc(100vh - 66px); /* pinned topbar (62) + its 4px bottom border */
+  min-height: calc(
+    100vh - 66px
+  ); /* pinned topbar (62) + its 4px bottom border */
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -136,7 +138,7 @@
 .forge-field::before {
   content: "";
   position: absolute;
-  left: -29px;
+  left: -30px;
   top: 3px;
   width: 12px;
   height: 12px;
@@ -196,7 +198,6 @@
 /* ---- inputs ---- */
 .forge-field input[type="text"],
 .forge-field input[type="file"],
-.forge-field textarea,
 .forge-field select {
   width: 100%;
   background: var(--paper);
@@ -258,6 +259,48 @@
 .forge-field input[type="file"]::file-selector-button:hover {
   background: var(--gold);
   color: var(--ink-dark);
+}
+
+/* ClearableFileInput's "Clear" checkbox (shows on edit when a cover exists) —
+   name ends in "-clear", so target that rather than every checkbox. */
+.forge-file {
+  line-height: 2;
+}
+/* Break after the "Currently: <file>" link so the clear control drops to its
+   own line, checkbox + label together. */
+.forge-file a::after {
+  content: "\A";
+  white-space: pre;
+}
+.forge-field input[type="checkbox"][name$="-clear"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 3px solid var(--ink);
+  background: var(--paper);
+  cursor: pointer;
+  position: relative;
+  vertical-align: middle;
+  margin: 0 6px 0 0;
+}
+.forge-field input[type="checkbox"][name$="-clear"]:checked {
+  background: var(--gold);
+}
+.forge-field input[type="checkbox"][name$="-clear"]:checked::after {
+  content: "✕";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--ink);
+}
+.forge-field label[for$="-clear_id"] {
+  font-size: 16px;
+  color: var(--ink);
+  vertical-align: middle;
 }
 
 /* validation styling now lives in base.css — every page renders the same markup */

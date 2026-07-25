@@ -1,0 +1,92 @@
+{% comment %}
+  Read-only PREVIEW of one quest — "open the quest and read what it asks".
+  A native <dialog>, pre-rendered one per quest. map.js opens it with showModal()
+  (viewQuest, on a card click that wasn't a drag); ✕, Esc, and a backdrop click all
+  close it. The dialog is a transparent wrapper — .preview-panel is the visible box.
+
+  This shows the quest as the AUTHOR defined it — title, tale, prerequisites, and
+  the objectives (trials). There is no per-adventurer progress here (no checked
+  boxes, no live slider value, no counts); that arrives with the progress models.
+  The slider is rendered disabled, parked at its goal, purely to picture the range.
+
+  Context (passed by the include in map.html):
+    quest  — the Quest
+    index  — its position on the map (forloop.counter)
+    total  — questline.quests.count
+{% endcomment %}
+<dialog class="quest-preview" id="preview-{{ quest.pk }}">
+  <aside class="preview-panel">
+    <div class="preview-top">
+      <span class="preview-crumb">
+        {% if quest.is_optional %}
+          SIDE QUEST
+        {% else %}
+          QUEST {{ index }} OF {{ total }}
+        {% endif %}
+      </span>
+      {% if quest.is_optional %}<span class="optional-badge">╌ OPTIONAL</span>{% endif %}
+      <a class="preview-close" href="#" aria-label="Close">✕</a>
+    </div>
+    <h2 class="preview-title">{{ quest.title }}</h2>
+    {% if quest.description %}<p class="preview-body">{{ quest.description|linebreaksbr }}</p>{% endif %}
+    {% if quest.prerequisite_quests.all %}
+      <div class="prereq-line">
+        ⛓ Requires:
+        {% for prerequisite in quest.prerequisite_quests.all %}
+          <strong>{{ prerequisite.title }}</strong>
+          {% if not forloop.last %},{% endif %}
+        {% endfor %}
+      </div>
+    {% endif %}
+    <div class="obj-heading">
+      <h3>✦ OBJECTIVES</h3>
+      <span class="obj-count">{{ quest.objectives.count }} TRIAL{{ quest.objectives.count|pluralize }}</span>
+    </div>
+    {% if quest.objectives.all %}
+      <div class="obj-list">
+        {% for objective in quest.objectives_preview %}
+          {% if objective.type == "sliderobjective" %}
+            <div class="obj-item obj-slider">
+              <div class="row">
+                <span class="obj-label">{{ objective.title }}</span>
+                <span class="val">{{ objective.min_value }} – {{ objective.max_value }}</span>
+                <span class="obj-kind">◄► METER</span>
+              </div>
+              {% if objective.description %}
+                <details class="obj-detail">
+                  <summary>DETAIL</summary>
+                  <p>{{ objective.description|linebreaksbr }}</p>
+                </details>
+              {% endif %}
+              <input type="range"
+                     class="ql-slider"
+                     min="{{ objective.min_value }}"
+                     max="{{ objective.max_value }}"
+                     value="{{ objective.target_value }}"
+                     disabled>
+              <div class="target-hint">
+                target: <strong>{{ objective.target_value }}</strong>
+              </div>
+            </div>
+          {% else %}
+            <div class="obj-item obj-check">
+              <div class="row">
+                <span class="box"></span>
+                <span class="obj-label">{{ objective.title }}</span>
+                <span class="obj-kind">▣ TASK</span>
+              </div>
+              {% if objective.description %}
+                <details class="obj-detail">
+                  <summary>DETAIL</summary>
+                  <p>{{ objective.description|linebreaksbr }}</p>
+                </details>
+              {% endif %}
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="obj-empty">No trials set — this quest is a milestone to reach, not a task to grind.</p>
+    {% endif %}
+  </aside>
+</dialog>

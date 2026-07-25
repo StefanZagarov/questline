@@ -11,7 +11,13 @@
       <header class="forge-brand">
         <div class="forge-sigil">✦</div>
         <p class="forge-kicker">THE CARTOGRAPHER'S TABLE</p>
-        <h1 class="forge-title">CHART A NEW QUESTLINE</h1>
+        <h1 class="forge-title">
+          {% if form.instance.pk %}
+            EDIT QUESTLINE
+          {% else %}
+            CHART A NEW QUESTLINE
+          {% endif %}
+        </h1>
         <p class="forge-tagline">every great adventure begins as lines on parchment.</p>
       </header>
       <section class="forge-desk">
@@ -42,7 +48,11 @@
             </div>
             <div class="forge-field">
               <label for="id_cover_image">BANNER OF THE REALM (OPTIONAL)</label>
-              {{ form.cover_image }}
+              {% comment %}
+                wrap so the field's flex-column treats the whole widget as ONE item —
+                inside this div the "Currently / Clear / Change" parts flow inline.
+              {% endcomment %}
+              <div class="forge-file">{{ form.cover_image }}</div>
               {{ form.cover_image.errors }}
             </div>
             <div class="forge-field">
@@ -51,7 +61,13 @@
               </p>
             </div>
           </div>
-          <button class="forge-btn" type="submit">⚔ FORGE THE QUESTLINE</button>
+          <button class="forge-btn" type="submit">
+            {% if form.instance.pk %}
+              EDIT QUESTLINE
+            {% else %}
+              ⚔ FORGE THE QUESTLINE
+            {% endif %}
+          </button>
         </form>
         <footer class="forge-foot">
           Changed your mind? <a class="forge-link" href="{% url 'home' %}">← BACK TO THE GUILD HALL</a>

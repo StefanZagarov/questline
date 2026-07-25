@@ -48,6 +48,12 @@ document.querySelectorAll("[data-close-drawer]").forEach((button) => {
   });
 });
 
+// Backdrop click: showModal() reports a ::backdrop hit as target === the dialog
+// itself; a click inside the form targets a child, so this only fires outside.
+drawer.addEventListener("click", (event) => {
+  if (event.target === drawer) drawer.close();
+});
+
 // Resets the drawer to a known state, then opens it. Prefill must come after.
 function openDrawer(action, text) {
   form.reset(); // back to the HTML's default values, i.e. blank
@@ -55,7 +61,6 @@ function openDrawer(action, text) {
   clearErrors();
   form.action = action; // decides create vs edit
 
-  // Undo the edit path's self-exclusion; form.reset() doesn't touch visibility.
   form
     .querySelectorAll('input[name="prerequisite_quests"]')
     .forEach((input) => {
@@ -71,7 +76,6 @@ function openDrawer(action, text) {
 }
 
 // ---- ERRORS ----
-
 // Empty every error box so old messages don't stack under the new ones.
 function clearErrors() {
   document

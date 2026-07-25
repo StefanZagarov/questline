@@ -9,4 +9,12 @@ class HomePageView(LoginRequiredMixin, ListView):
     template_name = "common/home-page.html"
 
     def get_queryset(self):
-        return Questline.objects.filter(visibility=Questline.Visibility.PUBLISHED)
+        return Questline.objects.filter(author=self.request.user)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        mine = self.get_queryset()
+        context["drafts"] = mine.filter(status=Questline.Status.DRAFT)
+        context["private"] = mine.filter(status=Questline.Status.PRIVATE)
+        context["published"] = mine.filter(status=Questline.Status.PUBLISHED)
+        return context
