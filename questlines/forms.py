@@ -23,6 +23,12 @@ class CreateQuestlineForm(forms.ModelForm):
         widgets = {"cover_image": CoverInput}
 
 
+class QuestlineStatusForm(forms.ModelForm):
+    class Meta:
+        model = Questline
+        fields = ["status"]
+
+
 # Serves both create and edit — a ModelForm doesn't know the difference; it just
 # binds to an instance or doesn't.
 class QuestForm(forms.ModelForm):

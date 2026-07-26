@@ -11,6 +11,45 @@
   not a property of the map itself, so it arrives with the progress models.
 {% endcomment %}
 <article class="ql-card">
+  {% comment %}
+    Presentation only. The menu opens natively through <details>; wire its status
+    and delete buttons to their forms/endpoints and expose the current status to
+    assistive technology.
+  {% endcomment %}
+  <details class="ql-card-menu">
+    <summary class="ql-card-menu-trigger" aria-label="Manage questline">
+      <span aria-hidden="true">⋮</span>
+    </summary>
+    <div class="ql-card-menu-panel">
+      <span class="ql-card-menu-label">STATUS</span>
+      <form method="POST" action="{% url 'questline-status' questline.pk %}">
+        {% csrf_token %}
+        <button name="status"
+                value="draft"
+                class="ql-card-menu-action ql-card-menu-action--draft">
+          <span aria-hidden="true">✎</span>
+          <span>DRAFT</span>
+        </button>
+        <button name="status"
+                value="private"
+                class="ql-card-menu-action ql-card-menu-action--private">
+          <span aria-hidden="true">◈</span>
+          <span>PRIVATE</span>
+        </button>
+        <button name="status"
+                value="public"
+                class="ql-card-menu-action ql-card-menu-action--public">
+          <span aria-hidden="true">★</span>
+          <span>PUBLIC</span>
+        </button>
+      </form>
+      <div class="ql-card-menu-divider"></div>
+      <button class="ql-card-menu-action ql-card-menu-delete">
+        <span aria-hidden="true">🗑</span>
+        <span>DELETE MAP</span>
+      </button>
+    </div>
+  </details>
   <div class="ql-card-top">
     <div class="ql-tag">{{ questline.category }}</div>
   </div>
@@ -19,5 +58,6 @@
   <div class="mini-bar-labels">
     <span>{{ questline.quests.count }} QUEST{{ questline.quests.count|pluralize }}</span>
   </div>
-  <a class="ql-cta {{ cta_style }}" href="{% url 'map-edit' questline.pk %}">{{ cta }}</a>
+  <a class="ql-cta {{ cta_style }}"
+     href="{% url 'map-edit' questline.pk %}">{{ cta }}</a>
 </article>

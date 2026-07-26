@@ -273,6 +273,12 @@
   /* ---------- listeners ---------- */
 
   function wire() {
+    document.addEventListener('click', function (event) {
+      $$('.ql-card-menu[open]').forEach(function (menu) {
+        if (!menu.contains(event.target)) menu.removeAttribute('open');
+      });
+    });
+
     $$('input[type=checkbox][data-obj]').forEach(function (el) {
       el.addEventListener('change', function () {
         state.progress[el.dataset.obj] = el.checked;

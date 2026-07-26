@@ -41,6 +41,8 @@
   text-align: center;
 }
 .ql-card {
+  position: relative;
+  z-index: 1;
   background: var(--card);
   border: 3px solid var(--ink);
   box-shadow: 5px 5px 0 rgba(58, 44, 21, 0.35);
@@ -48,6 +50,15 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
+}
+.ql-card:hover,
+.ql-card:has(.ql-card-menu[open]) {
+  z-index: 3;
+  transform: translate(-2px, -2px);
+  box-shadow: 7px 7px 0 rgba(58, 44, 21, 0.35);
 }
 .ql-card-top {
   display: flex;
@@ -117,6 +128,135 @@
   height: 16px;
   background: #e7d8b4;
   border: 3px solid var(--ink);
+}
+
+.ql-section {
+  margin-top: 2rem;
+}
+
+/* Compact card management, using the same overhanging footprint as the quest
+   card actions on the map. */
+.ql-card-menu {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  z-index: 4;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+}
+/* :hover remains active while the pointer is over an overhanging descendant,
+   so moving from the card onto the trigger does not hide it. */
+.ql-card:hover .ql-card-menu,
+.ql-card:focus-within .ql-card-menu,
+.ql-card-menu[open] {
+  opacity: 1;
+  pointer-events: auto;
+}
+.ql-card-menu-trigger {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: var(--ink);
+  background: var(--card-2);
+  border: 2px solid var(--ink);
+  box-shadow: 2px 2px 0 rgba(58, 44, 21, 0.35);
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 18px;
+  line-height: 1;
+  list-style: none;
+  cursor: pointer;
+}
+.ql-card-menu-trigger::-webkit-details-marker {
+  display: none;
+}
+.ql-card-menu-trigger:hover,
+.ql-card-menu[open] .ql-card-menu-trigger {
+  background: var(--gold-bright);
+}
+.ql-card-menu-trigger:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+.ql-card-menu-trigger:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+.ql-card-menu-panel {
+  position: absolute;
+  top: 31px;
+  right: 0;
+  width: 154px;
+  display: grid;
+  padding: 7px;
+  background: var(--card);
+  border: 2px solid var(--ink);
+  box-shadow: 4px 4px 0 rgba(58, 44, 21, 0.35);
+}
+.ql-card-menu-label {
+  padding: 3px 7px 6px;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--gold-dim);
+}
+.ql-card-menu-action {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 16px 1fr 12px;
+  align-items: center;
+  gap: 5px;
+  padding: 7px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 1px;
+  text-align: left;
+  cursor: pointer;
+}
+.ql-card-menu-action:hover,
+.ql-card-menu-action:focus-visible {
+  outline: none;
+  background: var(--gold-bright);
+  color: var(--ink-dark);
+}
+.ql-section--draft .ql-card-menu-action--draft,
+.ql-section--private .ql-card-menu-action--private,
+.ql-section--public .ql-card-menu-action--public {
+  background: var(--ink);
+  color: #f0e2bc;
+}
+.ql-section--draft .ql-card-menu-action--draft::after,
+.ql-section--private .ql-card-menu-action--private::after,
+.ql-section--public .ql-card-menu-action--public::after {
+  content: "✓";
+  color: var(--gold-bright);
+}
+.ql-card-menu-divider {
+  height: 2px;
+  margin: 6px 3px;
+  background: var(--line);
+}
+.ql-card-menu-delete {
+  color: #a1341f;
+}
+.ql-card-menu-delete:hover,
+.ql-card-menu-delete:focus-visible {
+  background: #a1341f;
+  color: #f0e2bc;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ql-card,
+  .ql-card-menu {
+    transition: none;
+  }
 }
 
 .ql-cta {

@@ -18,7 +18,7 @@ class Questline(models.Model):
     class Status(models.TextChoices):
         DRAFT = "draft", "Draft"
         PRIVATE = "private", "Private"
-        PUBLISHED = "published", "Published"
+        PUBLIC = "public", "Public"
 
     title = models.CharField(max_length=100)
     description = models.TextField(max_length=100)

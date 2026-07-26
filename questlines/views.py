@@ -1,10 +1,16 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
+from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.views import generic as views
 
-from questlines.forms import CreateQuestlineForm, MoveQuestForm, QuestForm
+from questlines.forms import (
+    CreateQuestlineForm,
+    MoveQuestForm,
+    QuestForm,
+    QuestlineStatusForm,
+)
 from questlines.mixins import ObjectiveSaveMixin
 from questlines.models import Quest, Questline
 
@@ -26,6 +32,32 @@ class CreateQuestlineView(LoginRequiredMixin, views.CreateView):
         return super().form_valid(form)
 
 
+class EditQuestlineView(LoginRequiredMixin, views.UpdateView):
+    model = Questline
+    form_class = CreateQuestlineForm
+    template_name = "questlines/questline-create.html"
+
+    def get_queryset(self):
+        return Questline.objects.filter(author=self.request.user)
+
+    def get_success_url(self):
+        return reverse("map-edit", kwargs={"pk": self.object.pk})
+
+
+class UpdateQuestlineStatusView(LoginRequiredMixin, views.UpdateView):
+    model = Questline
+    form_class = QuestlineStatusForm
+    success_url = reverse_lazy("home")
+    http_method_names = ["post"]
+
+    def get_queryset(self):
+        return Questline.objects.filter(author=self.request.user)
+
+    # We need the form as parameter so under the hood Django can wire it: self.form_invalid(form)
+    def form_invalid(self, form):
+        return HttpResponse(status=400)
+
+
 class EditMapView(LoginRequiredMixin, views.DetailView):
     model = Questline
     template_name = "questlines/map-edit.html"
@@ -41,21 +73,9 @@ class EditMapView(LoginRequiredMixin, views.DetailView):
 
     # get_object() searches whatever this returns, so narrowing it means someone
     # else's pk simply isn't found → 404 (which leaks less than a 403).
-    # TODO: becomes "mine OR published" once publishing exists.
+    # TODO: becomes "mine OR public" once publishing exists.
     def get_queryset(self):
         return Questline.objects.filter(author=self.request.user)
-
-
-class EditQuestlineView(LoginRequiredMixin, views.UpdateView):
-    model = Questline
-    form_class = CreateQuestlineForm
-    template_name = "questlines/questline-create.html"
-
-    def get_queryset(self):
-        return Questline.objects.filter(author=self.request.user)
-
-    def get_success_url(self):
-        return reverse("map-edit", kwargs={"pk": self.object.pk})
 
 
 class CreateQuestView(LoginRequiredMixin, ObjectiveSaveMixin, views.CreateView):
@@ -97,10 +117,6 @@ class CreateQuestView(LoginRequiredMixin, ObjectiveSaveMixin, views.CreateView):
         kwargs = super().get_form_kwargs()
         kwargs["questline_pk"] = self.kwargs["pk"]  # keyword-only: name must match
         return kwargs
-
-
-# class DetailsQuestView(LoginRequiuredMixin, views.ListView):
-#     model= Quest
 
 
 class EditQuestView(LoginRequiredMixin, ObjectiveSaveMixin, views.UpdateView):

@@ -16,5 +16,5 @@ class HomePageView(LoginRequiredMixin, ListView):
         mine = self.get_queryset()
         context["drafts"] = mine.filter(status=Questline.Status.DRAFT)
         context["private"] = mine.filter(status=Questline.Status.PRIVATE)
-        context["published"] = mine.filter(status=Questline.Status.PUBLISHED)
+        context["public"] = mine.filter(status=Questline.Status.PUBLIC)
         return context
