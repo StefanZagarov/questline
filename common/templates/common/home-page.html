@@ -2,6 +2,7 @@
 {% load static %}
 {% block extra_js %}
   <script src="{% static 'common/js/script.js'%}" defer></script>
+  <script src="{% static 'common/js/delete.js'%}" defer></script>
 {% endblock %}
 {% block extra_css %}
   <link rel="stylesheet" href="{% static 'common/css/home.css' %}">
@@ -112,4 +113,28 @@
       </div>
     </section>
   </div>
+  {% comment %}
+    One shared confirmation dialog. The clicked card supplies its title and
+    server-generated delete URL; the page JavaScript wires those values before opening it.
+  {% endcomment %}
+  <dialog class="ql-delete-dialog"
+          data-questline-delete-dialog
+          aria-labelledby="ql-delete-title">
+    <form class="ql-delete-form" method="post" data-questline-delete-form>
+      {% csrf_token %}
+      <button class="ql-delete-close"
+              type="button"
+              data-close-questline-delete
+              aria-label="Close delete confirmation">×</button>
+      <p class="ql-delete-kicker">PERMANENT ACTION</p>
+      <h2 class="ql-delete-title" id="ql-delete-title">
+        DELETE <span data-questline-delete-title>THIS MAP</span>?
+      </h2>
+      <p class="ql-delete-warning">Every quest and objective on this map will be permanently deleted.</p>
+      <div class="ql-delete-actions">
+        <button class="ql-delete-cancel" type="button" data-close-questline-delete>KEEP MAP</button>
+        <button class="ql-delete-confirm" type="submit">DELETE MAP</button>
+      </div>
+    </form>
+  </dialog>
 {% endblock %}

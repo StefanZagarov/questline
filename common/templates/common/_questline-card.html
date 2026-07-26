@@ -44,7 +44,11 @@
         </button>
       </form>
       <div class="ql-card-menu-divider"></div>
-      <button class="ql-card-menu-action ql-card-menu-delete">
+      <button class="ql-card-menu-action ql-card-menu-delete"
+              type="button"
+              data-open-questline-delete
+              data-delete-url="{% url 'questline-delete' questline.pk %}"
+              data-questline-title="{{ questline.title }}">
         <span aria-hidden="true">🗑</span>
         <span>DELETE MAP</span>
       </button>

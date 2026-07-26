@@ -332,3 +332,126 @@
   font-size: 14px;
   font-style: italic;
 }
+
+/* ============ DELETE QUESTLINE DIALOG ============ */
+
+.ql-delete-dialog {
+  width: min(420px, calc(100vw - 32px));
+  margin: auto;
+  padding: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  color: var(--ink);
+  background: var(--card);
+  border: 3px solid var(--ink);
+  box-shadow: 8px 8px 0 rgba(20, 16, 10, 0.45);
+}
+.ql-delete-dialog::backdrop {
+  background: rgba(26, 19, 8, 0.58);
+}
+.ql-delete-form {
+  position: relative;
+  padding: 28px;
+}
+.ql-delete-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: var(--ink);
+  background: var(--card-2);
+  border: 2px solid var(--ink);
+  box-shadow: 2px 2px 0 rgba(58, 44, 21, 0.35);
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+}
+.ql-delete-close:hover {
+  color: #f0e2bc;
+  background: #a1341f;
+}
+.ql-delete-close:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+.ql-delete-kicker {
+  margin: 0 0 8px;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #a1341f;
+}
+.ql-delete-title {
+  margin: 0;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: 1px;
+  color: var(--ink-dark);
+  overflow-wrap: anywhere;
+}
+.ql-delete-title span {
+  color: #a1341f;
+}
+.ql-delete-warning {
+  margin: 12px 0 24px;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--muted-2);
+}
+.ql-delete-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.ql-delete-cancel,
+.ql-delete-confirm {
+  min-height: 40px;
+  padding: 9px 10px;
+  border: 3px solid var(--ink);
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 11px;
+  letter-spacing: 1px;
+  cursor: pointer;
+}
+.ql-delete-cancel {
+  color: var(--ink);
+  background: var(--card-2);
+}
+.ql-delete-cancel:hover {
+  background: var(--paper);
+}
+.ql-delete-confirm {
+  color: #f0e2bc;
+  background: #a1341f;
+  box-shadow: 3px 3px 0 rgba(58, 44, 21, 0.35);
+}
+.ql-delete-confirm:hover {
+  background: #7f2618;
+}
+.ql-delete-confirm:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 rgba(58, 44, 21, 0.35);
+}
+.ql-delete-close:focus-visible,
+.ql-delete-cancel:focus-visible,
+.ql-delete-confirm:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+
+@media (max-width: 460px) {
+  .ql-delete-form {
+    padding: 24px 20px 20px;
+  }
+  .ql-delete-actions {
+    grid-template-columns: 1fr;
+  }
+}

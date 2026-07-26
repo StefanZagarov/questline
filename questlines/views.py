@@ -48,6 +48,7 @@ class UpdateQuestlineStatusView(LoginRequiredMixin, views.UpdateView):
     model = Questline
     form_class = QuestlineStatusForm
     success_url = reverse_lazy("home")
+    # Accept only POST requests, all others will make it return 400
     http_method_names = ["post"]
 
     def get_queryset(self):
@@ -56,6 +57,15 @@ class UpdateQuestlineStatusView(LoginRequiredMixin, views.UpdateView):
     # We need the form as parameter so under the hood Django can wire it: self.form_invalid(form)
     def form_invalid(self, form):
         return HttpResponse(status=400)
+
+
+class DeleteQuestlineView(LoginRequiredMixin, views.DeleteView):
+    model = Questline
+    success_url = reverse_lazy("home")
+    http_method_names = ["post"]
+
+    def get_queryset(self):
+        return Questline.objects.filter(author=self.request.user)
 
 
 class EditMapView(LoginRequiredMixin, views.DetailView):
