@@ -1,0 +1,223 @@
+/* ============ PUBLIC MAP — READ-ONLY INSPECTION ============ */
+
+.public-map {
+  padding-top: 34px;
+}
+
+.public-map-back {
+  display: inline-block;
+  margin-bottom: 18px;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--gold-deep);
+  text-decoration: none;
+}
+
+.public-map-back:hover,
+.public-map-back:focus-visible {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.public-map-charter {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 320px);
+  gap: clamp(28px, 5vw, 66px);
+  padding: clamp(26px, 4vw, 46px);
+  background:
+    linear-gradient(90deg, rgba(246, 237, 214, 0.97), rgba(246, 237, 214, 0.9)),
+    repeating-linear-gradient(0deg, transparent 0 39px, rgba(138, 106, 30, 0.11) 40px);
+  border: 3px solid var(--ink);
+  box-shadow: 7px 7px 0 rgba(58, 44, 21, 0.34);
+}
+
+.public-map-charter::before {
+  content: "";
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  width: 16px;
+  height: 16px;
+  border-top: 3px solid var(--gold-deep);
+  border-left: 3px solid var(--gold-deep);
+}
+
+.public-map-kicker,
+.public-map-decision-label {
+  margin: 0 0 8px;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--gold-deep);
+}
+
+.public-map-title {
+  margin: 0;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: clamp(32px, 5vw, 52px);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 1px;
+  color: var(--ink-dark);
+  overflow-wrap: anywhere;
+  text-shadow: 3px 3px 0 rgba(201, 150, 46, 0.25);
+}
+
+.public-map-description {
+  max-width: 680px;
+  margin: 16px 0 20px;
+  font-size: 18px;
+  line-height: 1.5;
+  color: var(--muted-2);
+  text-wrap: pretty;
+}
+
+.public-map-byline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--muted);
+}
+
+.public-map-byline strong {
+  color: var(--ink);
+}
+
+.public-map-decision {
+  position: relative;
+  align-self: center;
+  padding: 24px;
+  background: var(--card-2);
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 rgba(58, 44, 21, 0.28);
+}
+
+.public-map-decision-mark {
+  position: absolute;
+  top: -18px;
+  right: 18px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  font-family: "Pixelify Sans", sans-serif;
+  color: var(--ink-dark);
+  background: var(--gold);
+  border: 3px solid var(--ink);
+  transform: rotate(45deg);
+}
+
+.public-map-decision-mark::first-letter {
+  transform: rotate(-45deg);
+}
+
+.public-map-primary-action {
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.public-map-decision-note {
+  margin: 12px 0 0;
+  font-size: 14px;
+  font-style: italic;
+  line-height: 1.35;
+  text-align: center;
+  color: var(--muted);
+}
+
+.public-map-board {
+  margin-top: 46px;
+}
+
+.public-map-heading-row {
+  align-items: end;
+}
+
+.public-map-heading-row .map-title {
+  font-size: 26px;
+}
+
+.public-map-legend {
+  margin-top: 10px;
+}
+
+.public-map-key {
+  color: var(--card);
+  text-shadow:
+    -1px -1px 0 var(--ink),
+    1px -1px 0 var(--ink),
+    -1px 1px 0 var(--ink),
+    1px 1px 0 var(--ink);
+}
+
+.public-map-key--optional {
+  color: var(--card-2);
+}
+
+.public-map-scroll {
+  margin-top: 14px;
+}
+
+.public-map-canvas {
+  height: 680px;
+  background:
+    radial-gradient(circle at center, rgba(201, 150, 46, 0.08), transparent 54%),
+    repeating-linear-gradient(90deg, transparent 0 79px, rgba(138, 106, 30, 0.06) 80px),
+    repeating-linear-gradient(0deg, transparent 0 79px, rgba(138, 106, 30, 0.06) 80px);
+}
+
+.public-map-quest {
+  cursor: pointer;
+}
+
+.public-map-quest .qcard {
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.public-map-quest:hover .qcard,
+.public-map-quest:focus-within .qcard {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--ink);
+}
+
+.public-map-quest .qcard:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 4px;
+}
+
+@media (max-width: 820px) {
+  .public-map-charter {
+    grid-template-columns: 1fr;
+  }
+
+  .public-map-decision {
+    width: 100%;
+  }
+}
+
+@media (max-width: 620px) {
+  .public-map {
+    padding: 24px 16px 60px;
+  }
+
+  .public-map-charter {
+    padding: 28px 20px 24px;
+  }
+
+  .public-map-heading-row {
+    align-items: start;
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .public-map-quest .qcard {
+    transition: none;
+  }
+}

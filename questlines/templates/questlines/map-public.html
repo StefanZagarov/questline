@@ -1,0 +1,92 @@
+{% extends 'common/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'questlines/css/questline-map.css' %}">
+  <link rel="stylesheet" href="{% static 'questlines/css/map-public.css' %}">
+{% endblock %}
+
+{% block content %}
+  <main class="map-page public-map">
+    <a class="public-map-back" href="#">← BACK TO EXPLORE</a>
+
+    <header class="public-map-charter">
+      <div class="public-map-copy">
+        <p class="public-map-kicker">PUBLIC QUESTLINE · [CATEGORY]</p>
+        <h1 class="public-map-title">QUESTLINE TITLE</h1>
+        <p class="public-map-description">The Questline description goes here. This is the map-maker's promise: where the route leads, what it covers, and who it is meant to guide.</p>
+        <div class="public-map-byline">
+          <span>CHARTED BY <strong>[AUTHOR]</strong></span>
+          <span>◆ [DIFFICULTY]</span>
+          <span>[QUEST COUNT] QUESTS</span>
+        </div>
+      </div>
+
+      <aside class="public-map-decision" aria-label="Questline action">
+        <span class="public-map-decision-mark" aria-hidden="true">✦</span>
+        <p class="public-map-decision-label">READY TO TAKE THIS ROUTE?</p>
+        {% comment %}
+          USER WIRING: render exactly one truthful action here:
+          guest -> Login to Accept; authenticated non-owner -> Accept POST form;
+          owner -> Edit Map (Start/Continue arrives with Enrollment).
+        {% endcomment %}
+        <a class="public-map-primary-action" href="#">PRIMARY ACTION</a>
+        <p class="public-map-decision-note">Inspect every Quest below before deciding.</p>
+      </aside>
+    </header>
+
+    <section class="public-map-board" aria-labelledby="public-map-heading">
+      <div class="map-heading-row public-map-heading-row">
+        <h2 id="public-map-heading" class="map-title">✦ THE QUEST MAP</h2>
+        <p class="map-hint">click a Quest to inspect its description and Objectives</p>
+      </div>
+
+      <div class="legend public-map-legend">
+        <div><span class="public-map-key">■</span> quest</div>
+        <div><span class="public-map-key public-map-key--optional">■</span> optional path</div>
+        <div class="sep">⛓ lines show prerequisites</div>
+      </div>
+
+      <div class="map-scroll public-map-scroll">
+        <div class="map-canvas public-map-canvas">
+          {% comment %}
+            USER WIRING: render prerequisite SVG paths and position every Quest
+            from its stored coordinates. The sample route below is visual only.
+          {% endcomment %}
+          <svg class="map-edges" viewBox="0 0 990 680" aria-hidden="true">
+            <path class="map-edge" d="M 235 154 C 235 230, 455 230, 455 306"></path>
+            <path class="map-edge is-optional" d="M 570 366 C 650 366, 690 366, 770 366"></path>
+          </svg>
+
+          <div class="qgroup public-map-quest" style="left: 120px; top: 90px;">
+            <a class="qcard qcard-draft" href="#">
+              <div class="crumb">QUEST 1</div>
+              <div class="qtitle">FIRST QUEST TITLE</div>
+            </a>
+          </div>
+
+          <div class="qgroup public-map-quest" style="left: 340px; top: 305px;">
+            <a class="qcard qcard-draft" href="#">
+              <div class="crumb">QUEST 2</div>
+              <div class="qtitle">NEXT QUEST TITLE</div>
+            </a>
+          </div>
+
+          <div class="qgroup public-map-quest" style="left: 655px; top: 305px;">
+            <a class="qcard qcard-draft qcard-optional" href="#">
+              <span class="optional-flag">OPTIONAL PATH</span>
+              <div class="crumb">SIDE QUEST</div>
+              <div class="qtitle">OPTIONAL QUEST TITLE</div>
+            </a>
+          </div>
+
+          {% comment %}
+            USER WIRING: replace the sample nodes above with the Quest loop, then
+            render/reuse one read-only quest-preview dialog per Quest outside main.
+            The user owns all click/dialog JavaScript.
+          {% endcomment %}
+        </div>
+      </div>
+    </section>
+  </main>
+{% endblock %}

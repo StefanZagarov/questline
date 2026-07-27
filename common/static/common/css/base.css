@@ -184,6 +184,10 @@ textarea:focus {
   font-family: "Pixelify Sans", sans-serif;
   font-size: 20px;
   color: var(--ink-dark);
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease,
+    background-color 120ms ease;
 }
 .brand-row {
   display: flex;
@@ -200,12 +204,75 @@ a.brand-row .wordmark {
 }
 a.brand-row:hover .logo-sm {
   background: var(--gold-bright);
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.4);
 }
 .wordmark {
   font-family: "Pixelify Sans", sans-serif;
   font-size: 20px;
   letter-spacing: 3px;
   color: #f0e2bc;
+  transition:
+    transform 120ms ease,
+    color 120ms ease,
+    text-shadow 120ms ease;
+}
+a.brand-row:hover .wordmark,
+a.brand-row:focus-visible .wordmark {
+  color: var(--gold-bright);
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.65);
+  transform: translate(-1px, -1px);
+}
+a.brand-row:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 5px;
+}
+.topbar-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 18px;
+}
+.topbar-nav-link {
+  position: relative;
+  padding: 7px 9px;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 16px;
+  letter-spacing: 2px;
+  color: var(--sand);
+  text-decoration: none;
+  transition:
+    color 120ms ease,
+    transform 120ms ease,
+    text-shadow 120ms ease;
+}
+.topbar-nav-link::after {
+  content: "";
+  position: absolute;
+  right: 9px;
+  bottom: 2px;
+  left: 9px;
+  height: 2px;
+  background: var(--gold);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 120ms ease;
+}
+.topbar-nav-link:hover,
+.topbar-nav-link:focus-visible,
+.topbar-nav-link.is-current {
+  color: #f0e2bc;
+  outline: none;
+}
+.topbar-nav-link:hover,
+.topbar-nav-link:focus-visible {
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.65);
+  transform: translate(-2px, -2px);
+}
+.topbar-nav-link:hover::after,
+.topbar-nav-link:focus-visible::after,
+.topbar-nav-link.is-current::after {
+  transform: scaleX(1);
 }
 .topbar-divider {
   width: 3px;
@@ -290,4 +357,33 @@ a.brand-row:hover .logo-sm {
 .leave-btn:hover {
   color: #f0e2bc;
   border-color: var(--sand);
+}
+
+@media (max-width: 720px) {
+  .topbar-inner {
+    flex-wrap: wrap;
+  }
+  .topbar-nav {
+    order: 3;
+    width: 100%;
+    margin-left: 0;
+    padding-top: 8px;
+    border-top: 2px solid #4a3a20;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo-sm,
+  .wordmark,
+  .topbar-nav-link,
+  .topbar-nav-link::after {
+    transition: none;
+  }
+  a.brand-row:hover .logo-sm,
+  a.brand-row:hover .wordmark,
+  a.brand-row:focus-visible .wordmark,
+  .topbar-nav-link:hover,
+  .topbar-nav-link:focus-visible {
+    transform: none;
+  }
 }

@@ -68,6 +68,8 @@ class DeleteQuestlineView(LoginRequiredMixin, views.DeleteView):
         return Questline.objects.filter(author=self.request.user)
 
 
+
+
 class EditMapView(LoginRequiredMixin, views.DetailView):
     model = Questline
     template_name = "questlines/map-edit.html"

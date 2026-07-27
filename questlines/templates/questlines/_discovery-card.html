@@ -1,0 +1,30 @@
+<article class="discovery-card">
+  <div class="discovery-card-route" aria-hidden="true">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+  <div class="discovery-card-topline">
+    <span class="discovery-card-category">{{ questline.category }}</span>
+    <span class="discovery-card-difficulty">◆ {{ questline.get_difficulty_display }}</span>
+  </div>
+  <div class="discovery-card-copy">
+    <h3 class="discovery-card-title">{{ questline.title }}</h3>
+    <p class="discovery-card-description">{{ questline.description }}</p>
+  </div>
+  <dl class="discovery-card-meta">
+    <div>
+      <dt>CHARTED BY</dt>
+      <dd>
+        {{ questline.author }}
+      </dd>
+    </div>
+    <div>
+      <dt>ROUTE</dt>
+      <dd>
+        {{ questline.quests.count }} QUESTS
+      </dd>
+    </div>
+  </dl>
+  <a class="discovery-card-action" href="#">INSPECT MAP <span aria-hidden="true">→</span></a>
+</article>

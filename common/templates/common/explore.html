@@ -1,0 +1,64 @@
+{% extends 'common/base.html' %}
+{% load static %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'common/css/explore.css' %}">
+{% endblock %}
+{% block content %}
+  <main class="explore-page">
+    <header class="explore-hero">
+      <h1 class="explore-title">Find your next Questline</h1>
+      <form class="explore-search" method="get" role="search">
+        <div class="explore-search-row">
+          <span class="explore-search-glyph" aria-hidden="true">⌕</span>
+          <input id="explore-query"
+                 value="{{ request.GET.q }}"
+                 class="explore-search-input"
+                 type="search"
+                 name="q"
+                 placeholder="Questline title or category…"
+                 autocomplete="off">
+          <button class="explore-search-submit" type="submit">SEARCH</button>
+        </div>
+      </form>
+    </header>
+    <section class="explore-results" aria-labelledby="explore-results-title">
+      <div class="explore-results-heading">
+        <div>
+          <p class="explore-results-kicker">PUBLIC MAPS</p>
+          <h2 id="explore-results-title" class="explore-results-title">Available Questlines</h2>
+        </div>
+        <p class="explore-results-count">{{ paginator.count }} QUESTLINE{{ paginator.count|pluralize }}</p>
+      </div>
+      <div class="explore-grid">
+        {% for questline in questlines %}
+          {% include 'questlines/_discovery-card.html' %}
+        {% empty %}
+          <div class="explore-empty">
+            <span class="explore-empty-mark" aria-hidden="true">⌖</span>
+            <h2>No routes found</h2>
+            <p>Try another title or category.</p>
+          </div>
+        {% endfor %}
+      </div>
+      {% if is_paginated %}
+        <nav class="explore-pagination" aria-label="Discovery pages">
+          {% if page_obj.has_previous %}
+            <a class="explore-page-link explore-page-link--direction"
+               href="?page={{ page_obj.previous_page_number }}&q={{ request.GET.q|urlencode }}">← PREVIOUS</a>
+          {% else %}
+            <span class="explore-page-link explore-page-link--direction is-disabled"
+                  aria-disabled="true">← PREVIOUS</span>
+          {% endif %}
+          <span class="explore-page-link is-current" aria-current="page">{{ page_obj.number }}/{{ page_obj.paginator.num_pages }}</span>
+          {% if page_obj.has_next %}
+            <a class="explore-page-link explore-page-link--direction"
+               href="?page={{ page_obj.next_page_number }}&q={{ request.GET.q|urlencode }}">NEXT →</a>
+          {% else %}
+            <span class="explore-page-link explore-page-link--direction is-disabled"
+                  aria-disabled="true">NEXT →</span>
+          {% endif %}
+        </nav>
+      {% endif %}
+    </section>
+  </main>
+{% endblock %}
