@@ -12,26 +12,33 @@
 
     <header class="public-map-charter">
       <div class="public-map-copy">
-        <p class="public-map-kicker">PUBLIC QUESTLINE · [CATEGORY]</p>
-        <h1 class="public-map-title">QUESTLINE TITLE</h1>
+        <div class="public-map-title-row">
+          <span class="public-map-title-logo" aria-hidden="true">
+            <span class="logo-sm">
+              <span class="logo-sm-field"><span class="logo-sm-mark"></span></span>
+            </span>
+          </span>
+          <h1 class="public-map-title">QUESTLINE TITLE</h1>
+        </div>
         <p class="public-map-description">The Questline description goes here. This is the map-maker's promise: where the route leads, what it covers, and who it is meant to guide.</p>
         <div class="public-map-byline">
           <span>CHARTED BY <strong>[AUTHOR]</strong></span>
-          <span>◆ [DIFFICULTY]</span>
-          <span>[QUEST COUNT] QUESTS</span>
+          <span>[CATEGORY]</span>
+          <span>[DIFFICULTY]</span>
         </div>
       </div>
 
       <aside class="public-map-decision" aria-label="Questline action">
-        <span class="public-map-decision-mark" aria-hidden="true">✦</span>
-        <p class="public-map-decision-label">READY TO TAKE THIS ROUTE?</p>
         {% comment %}
           USER WIRING: render exactly one truthful action here:
           guest -> Login to Accept; authenticated non-owner -> Accept POST form;
           owner -> Edit Map (Start/Continue arrives with Enrollment).
         {% endcomment %}
-        <a class="public-map-primary-action" href="#">PRIMARY ACTION</a>
-        <p class="public-map-decision-note">Inspect every Quest below before deciding.</p>
+        <div class="public-map-action-option">
+          <a class="public-map-primary-action" href="#">
+            <span>ACCEPT QUESTLINE</span>
+          </a>
+        </div>
       </aside>
     </header>
 

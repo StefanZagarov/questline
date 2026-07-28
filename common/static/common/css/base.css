@@ -173,21 +173,29 @@ textarea:focus {
   color: var(--ink-dark);
 }
 .logo-sm {
-  width: 34px;
-  height: 34px;
-  background: var(--gold);
-  border: 3px solid var(--black);
+  width: 30px;
+  height: 30px;
+  background: var(--ink);
   box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: "Pixelify Sans", sans-serif;
-  font-size: 20px;
-  color: var(--ink-dark);
+  display: grid;
+  place-items: center;
+  transform: rotate(45deg);
   transition:
     transform 120ms ease,
-    box-shadow 120ms ease,
-    background-color 120ms ease;
+    box-shadow 120ms ease;
+}
+.logo-sm-field {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  background: var(--gold-bright);
+}
+.logo-sm-mark {
+  width: 9px;
+  height: 9px;
+  background: var(--ink);
+  transform: translate(3px, 3px);
 }
 .brand-row {
   display: flex;
@@ -203,8 +211,7 @@ a.brand-row .wordmark {
   text-decoration: none;
 }
 a.brand-row:hover .logo-sm {
-  background: var(--gold-bright);
-  transform: translate(-2px, -2px);
+  transform: translate(-2px, -2px) rotate(45deg);
   box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.4);
 }
 .wordmark {
@@ -379,11 +386,13 @@ a.brand-row:focus-visible {
   .topbar-nav-link::after {
     transition: none;
   }
-  a.brand-row:hover .logo-sm,
   a.brand-row:hover .wordmark,
   a.brand-row:focus-visible .wordmark,
   .topbar-nav-link:hover,
   .topbar-nav-link:focus-visible {
     transform: none;
+  }
+  a.brand-row:hover .logo-sm {
+    transform: rotate(45deg);
   }
 }

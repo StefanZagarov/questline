@@ -15,6 +15,11 @@ urlpatterns = [
         views.DeleteQuestlineView.as_view(),
         name="questline-delete",
     ),
+    path(
+        "<int:pk>/map-public",
+        views.PublicQuestlineDetailView.as_view(),
+        name="map-public",
+    ),
     path("<int:pk>/map-edit", views.EditMapView.as_view(), name="map-edit"),
     path(
         "<int:pk>/map/add-quest", views.CreateQuestView.as_view(), name="quest-create"

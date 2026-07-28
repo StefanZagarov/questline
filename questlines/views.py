@@ -68,6 +68,13 @@ class DeleteQuestlineView(LoginRequiredMixin, views.DeleteView):
         return Questline.objects.filter(author=self.request.user)
 
 
+class PublicQuestlineDetailView(views.DetailView):
+    model = Questline
+    template_name = "questlines/map-public.html"
+
+    # DetailView automatically gets the questline's pk from the url and returns that specific instance
+    def get_queryset(self):
+        return Questline.objects.filter(status=Questline.Status.PUBLIC)
 
 
 class EditMapView(LoginRequiredMixin, views.DetailView):

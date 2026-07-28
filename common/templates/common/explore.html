@@ -49,7 +49,18 @@
             <span class="explore-page-link explore-page-link--direction is-disabled"
                   aria-disabled="true">← PREVIOUS</span>
           {% endif %}
-          <span class="explore-page-link is-current" aria-current="page">{{ page_obj.number }}/{{ page_obj.paginator.num_pages }}</span>
+          {% for page_number in page_obj.paginator.page_range %}
+            {% if page_number == 1 or page_number == page_obj.paginator.num_pages or page_number >= page_obj.number|add:"-1" and page_number <= page_obj.number|add:"1" %}
+              {% if page_number == page_obj.number %}
+                <span class="explore-page-link is-current" aria-current="page">{{ page_number }}</span>
+              {% else %}
+                <a class="explore-page-link"
+                   href="?page={{ page_number }}&q={{ request.GET.q|urlencode }}">{{ page_number }}</a>
+              {% endif %}
+            {% elif page_number == 2 and page_number < page_obj.number|add:"-1" or page_number == page_obj.paginator.num_pages|add:"-1" and page_number > page_obj.number|add:"1" %}
+              <span class="explore-page-ellipsis" aria-hidden="true">…</span>
+            {% endif %}
+          {% endfor %}
           {% if page_obj.has_next %}
             <a class="explore-page-link explore-page-link--direction"
                href="?page={{ page_obj.next_page_number }}&q={{ request.GET.q|urlencode }}">NEXT →</a>
