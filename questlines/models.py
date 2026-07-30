@@ -3,8 +3,6 @@ import json
 from django.conf import settings
 from django.db import models
 
-from common.validators import validate_image_size
-
 
 class Questline(models.Model):
     class Meta:
@@ -25,9 +23,6 @@ class Questline(models.Model):
     category = models.CharField(max_length=100)
     difficulty = models.CharField(
         max_length=6, choices=Difficulty.choices, default=Difficulty.EASY
-    )
-    cover_image = models.ImageField(
-        upload_to="covers", validators=(validate_image_size,), blank=True, null=True
     )
     author = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     status = models.CharField(

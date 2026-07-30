@@ -11,7 +11,9 @@
       <header class="gate-brand">
         <div class="logo-diamond">◆</div>
         <h1 class="gate-title">QUESTLINE</h1>
-        <p class="gate-tagline">every goal is a map. every map is an adventure.</p>
+        <p class="gate-tagline">
+          <a class="pixel-link" href="{% url 'explore' %}">EXPLORE PUBLIC QUESTLINES →</a>
+        </p>
       </header>
       <section class="gate-card">
         <h2 class="card-heading">⚑ RESUME YOUR ADVENTURE</h2>
@@ -31,7 +33,8 @@
           <button class="btn btn-primary" type="submit">▶ ENTER THE REALM</button>
         </form>
         <footer class="card-foot">
-          New to the realm? <a class="pixel-link" href="{% url 'register' %}">FORGE A NEW LEGEND →</a>
+          New to the realm? <a class="pixel-link"
+             href="{% url 'register' %}{% if request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}">FORGE A NEW LEGEND →</a>
         </footer>
       </section>
     </div>

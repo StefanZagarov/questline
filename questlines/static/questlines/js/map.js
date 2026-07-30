@@ -1,5 +1,3 @@
-const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
-
 const canvas = document.querySelector(".map-canvas"); // the coordinate space
 const edges = document.querySelector("[data-edges]");
 
@@ -12,9 +10,68 @@ const EDGE_CURVE = 60;
 const CARD_GUTTER = 10;
 // px of travel before a press counts as a drag, not a click
 const DRAG_THRESHOLD = 4;
+const MIN_CANVAS_HEIGHT = 680;
+const GROW_THRESHOLD = 20;
+const GROW_AMOUNT = 20;
+const BOTTOM_PADDING = 20;
+const HEIGHT_SETTLE_DURATION = 180;
+let heightSettleTimer = null;
+
+function stopHeightTransition() {
+  if (heightSettleTimer !== null) {
+    window.clearTimeout(heightSettleTimer);
+    heightSettleTimer = null;
+  }
+
+  canvas.style.removeProperty("transition");
+}
+
+function contentHeight() {
+  let lowestQuestBottom = 0;
+
+  document.querySelectorAll(".qgroup").forEach((group) => {
+    lowestQuestBottom = Math.max(
+      lowestQuestBottom,
+      group.offsetTop + group.offsetHeight,
+    );
+  });
+
+  return Math.max(MIN_CANVAS_HEIGHT, lowestQuestBottom + BOTTOM_PADDING);
+}
+
+function fitCanvasToQuests({ animate = false } = {}) {
+  const targetHeight = contentHeight();
+
+  if (!animate || targetHeight === canvas.clientHeight) {
+    stopHeightTransition();
+    canvas.style.height = `${targetHeight}px`;
+    return;
+  }
+
+  stopHeightTransition();
+  canvas.style.transition = `height ${HEIGHT_SETTLE_DURATION}ms ease`;
+  canvas.style.height = `${targetHeight}px`;
+
+  heightSettleTimer = window.setTimeout(() => {
+    canvas.style.removeProperty("transition");
+    heightSettleTimer = null;
+  }, HEIGHT_SETTLE_DURATION);
+}
+
+function growCanvasForQuest(top, questHeight) {
+  const requiredHeight = top + questHeight + GROW_THRESHOLD;
+  if (requiredHeight < canvas.clientHeight) return;
+
+  stopHeightTransition();
+  const missingHeight = requiredHeight - canvas.clientHeight;
+  const growthSteps = Math.max(1, Math.ceil(missingHeight / GROW_AMOUNT));
+  canvas.style.height = `${canvas.clientHeight + growthSteps * GROW_AMOUNT}px`;
+}
 
 function viewQuest(questId) {
   const drawer = document.getElementById(`preview-${questId}`);
+  const group = document.querySelector(`[data-quest-id="${questId}"]`);
+  group.classList.add("is-previewing");
   drawer.showModal();
 }
 
@@ -94,10 +151,11 @@ let dragged = false;
 let pressX = 0;
 let pressY = 0;
 
-document.querySelectorAll(".qgroup").forEach((group) => {
+document.querySelectorAll(".qgroup[data-move-url]").forEach((group) => {
   group.addEventListener("pointerdown", (event) => {
     if (event.target.closest("button")) return;
     event.preventDefault(); // .qcard is an <a> — stops the native drag ghost
+    stopHeightTransition();
 
     dragged = false;
     pressX = event.clientX;
@@ -131,6 +189,10 @@ document.querySelectorAll(".qgroup").forEach((group) => {
     const canvasRect = canvas.getBoundingClientRect();
     const left = event.clientX - canvasRect.left - grabX;
     const top = event.clientY - canvasRect.top - grabY;
+
+    if (dragged) {
+      growCanvasForQuest(top, group.offsetHeight);
+    }
 
     // The furthest a card's edge can sit and still keep its buttons inside.
     const maxHorizontalPosition =
@@ -169,10 +231,16 @@ document.querySelectorAll(".qgroup").forEach((group) => {
       return;
     }
 
+    fitCanvasToQuests({ animate: true });
+
     // When cursor releases, make a form with the x and y coordinates of the dragged card to send to the BE so they can be stored in the database, surviving reloads and app restarts
     const body = new FormData(); // no form to read, so build one
     body.append("coord_x", parseFloat(moved.style.left)); // "360px" → 360
     body.append("coord_y", parseFloat(moved.style.top));
+
+    const csrfToken = document.querySelector(
+      "[name=csrfmiddlewaretoken]",
+    ).value;
 
     const response = await fetch(moved.dataset.moveUrl, {
       method: "POST",
@@ -196,6 +264,14 @@ document.querySelectorAll(".qgroup").forEach((group) => {
 
     draggedGroup.classList.remove("is-dragging");
     draggedGroup = null;
+    fitCanvasToQuests({ animate: true });
+  });
+});
+
+document.querySelectorAll(".qgroup:not([data-move-url])").forEach((group) => {
+  group.addEventListener("click", (e) => {
+    e.preventDefault();
+    viewQuest(group.dataset.questId);
   });
 });
 
@@ -211,6 +287,13 @@ document.querySelectorAll(".quest-preview").forEach((dialog) => {
   dialog.addEventListener("click", (e) => {
     if (e.target === dialog) dialog.close();
   });
+
+  dialog.addEventListener("close", () => {
+    const questId = dialog.id.replace("preview-", "");
+    const group = document.querySelector(`[data-quest-id="${questId}"]`);
+    group.classList.remove("is-previewing");
+  });
 });
 
+fitCanvasToQuests();
 drawEdges();

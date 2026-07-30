@@ -1,4 +1,3 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
 from django.db.models.functions import Lower
 from django.views.generic import ListView
@@ -6,11 +5,14 @@ from django.views.generic import ListView
 from questlines.models import Questline
 
 
-class HomePageView(LoginRequiredMixin, ListView):
+class HomePageView(ListView):
     model = Questline
     template_name = "common/home-page.html"
 
     def get_queryset(self):
+        if not self.request.user.is_authenticated:
+            return Questline.objects.none()
+
         return Questline.objects.filter(author=self.request.user)
 
     def get_context_data(self, **kwargs):

@@ -20,6 +20,18 @@
   font-style: italic;
   color: var(--muted);
 }
+
+.guest-home-login {
+  color: var(--gold-deep);
+  text-decoration: underline;
+  text-underline-offset: 5px;
+}
+
+.guest-home-login:hover,
+.guest-home-login:focus-visible {
+  color: var(--gold);
+}
+
 .section-title {
   margin: 0 0 16px;
   font-family: "Pixelify Sans", sans-serif;

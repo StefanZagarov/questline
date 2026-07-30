@@ -27,5 +27,5 @@
     </div>
   </dl>
   <a class="discovery-card-action"
-     href="{% url 'map-public' questline.pk %}">INSPECT MAP <span aria-hidden="true">→</span></a>
+     href="{% url 'map-public' questline.pk %}?page={{ page_obj.number }}&q={{ request.GET.q|urlencode }}">INSPECT MAP <span aria-hidden="true">→</span></a>
 </article>

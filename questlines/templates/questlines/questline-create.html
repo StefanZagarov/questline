@@ -47,15 +47,6 @@
               {{ form.difficulty.errors }}
             </div>
             <div class="forge-field">
-              <label for="id_cover_image">BANNER OF THE REALM (OPTIONAL)</label>
-              {% comment %}
-                wrap so the field's flex-column treats the whole widget as ONE item —
-                inside this div the "Currently / Clear / Change" parts flow inline.
-              {% endcomment %}
-              <div class="forge-file">{{ form.cover_image }}</div>
-              {{ form.cover_image.errors }}
-            </div>
-            <div class="forge-field">
               <p class="forge-note">
                 ✒ Your questline starts as a <strong>Draft</strong> — chart its map, then publish it to the guild hall.
               </p>

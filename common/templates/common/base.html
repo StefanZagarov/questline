@@ -23,22 +23,27 @@
             </div>
             <div class="wordmark">QUESTLINE</div>
           </a>
+          <nav class="topbar-nav" aria-label="Primary navigation">
+            <a class="topbar-nav-link {% if request.resolver_match.url_name == 'home' %}is-current{% endif %}"
+               href="{% url "home" %}">Home</a>
+          </nav>
+          <nav class="topbar-nav" aria-label="Primary navigation">
+            <a class="topbar-nav-link {% if request.resolver_match.url_name == 'explore' %}is-current{% endif %}"
+               href="{% url "explore" %}">Explore</a>
+          </nav>
+          <div class="spacer"></div>
           {% if user.is_authenticated %}
-            <nav class="topbar-nav" aria-label="Primary navigation">
-              <a class="topbar-nav-link {% if request.resolver_match.url_name == 'home' %}is-current{% endif %}"
-                 href="{% url "home" %}">Home</a>
-            </nav>
-            <nav class="topbar-nav" aria-label="Primary navigation">
-              <a class="topbar-nav-link {% if request.resolver_match.url_name == 'explore' %}is-current{% endif %}"
-                 href="{% url "explore" %}">Explore</a>
-            </nav>
-            <div class="spacer"></div>
             <div class="topbar-actions">
               <div class="lv-badge" data-lv>LV 3</div>
               <form method="POST" action="{% url 'logout' %}">
                 {% csrf_token %}
                 <button class="leave-btn">LEAVE ⇥</button>
               </form>
+            </div>
+          {% else %}
+            <div class="topbar-actions">
+              <a class="leave-btn" href="{% url 'login' %}">LOGIN</a>
+              <a class="lv-badge" href="{% url 'register' %}">REGISTER</a>
             </div>
           {% endif %}
         </div>

@@ -1,16 +1,19 @@
 {% extends 'common/base.html' %}
 {% load static %}
 {% block extra_js %}
-  <script src="{% static 'common/js/script.js'%}" defer></script>
-  <script src="{% static 'common/js/delete.js'%}" defer></script>
+  {% if user.is_authenticated %}
+    <script src="{% static 'common/js/script.js'%}" defer></script>
+    <script src="{% static 'common/js/delete.js'%}" defer></script>
+  {% endif %}
 {% endblock %}
 {% block extra_css %}
   <link rel="stylesheet" href="{% static 'common/css/home.css' %}">
 {% endblock %}
 {% block content %}
   <div class="page">
-    <h1 class="hero-title">WELCOME BACK, {{ user.username }}</h1>
-    <p class="hero-sub">Pick up where you left off</p>
+    {% if user.is_authenticated %}
+      <h1 class="hero-title">WELCOME BACK, {{ user.username }}</h1>
+      <p class="hero-sub">Pick up where you left off</p>
     {% comment %}
       Three sections, one per status, all owned by the current user. The view
       partitions a single owner-scoped queryset into drafts / private / public
@@ -19,7 +22,7 @@
       _questline-card.html renders one card; only the Drafts grid carries the
       "chart a new map" tile, since a new map is born a draft.
     {% endcomment %}
-    <section class="ql-section ql-section--public">
+      <section class="ql-section ql-section--public">
       <h2 class="section-title">★ PUBLIC</h2>
       <div class="ql-grid">
         {% for questline in public %}
@@ -86,8 +89,8 @@
           <a class="ql-cta cta-dark" href="#">⚐ SET FORTH</a>
         </article>
       </div>
-    </section>
-    <section class="ql-section ql-section--private">
+      </section>
+      <section class="ql-section ql-section--private">
       <h2 class="section-title">◈ PRIVATE</h2>
       <div class="ql-grid">
         {% for questline in private %}
@@ -96,8 +99,8 @@
           <p class="empty-note">Nothing private yet — private maps are playable but unlisted.</p>
         {% endfor %}
       </div>
-    </section>
-    <section class="ql-section ql-section--draft">
+      </section>
+      <section class="ql-section ql-section--draft">
       <h2 class="section-title">✎ DRAFTS</h2>
       <div class="ql-grid">
         {% for questline in drafts %}
@@ -111,13 +114,18 @@
           <div class="hint">turn any goal into a questline</div>
         </a>
       </div>
-    </section>
+      </section>
+    {% else %}
+      <h1 class="hero-title"><a class="guest-home-login" href="{% url 'login' %}">LOGIN</a> TO CREATE QUESTLINES</h1>
+      <p class="hero-sub">Or explore public maps without an account.</p>
+    {% endif %}
   </div>
   {% comment %}
     One shared confirmation dialog. The clicked card supplies its title and
     server-generated delete URL; the page JavaScript wires those values before opening it.
   {% endcomment %}
-  <dialog class="ql-delete-dialog"
+  {% if user.is_authenticated %}
+    <dialog class="ql-delete-dialog"
           data-questline-delete-dialog
           aria-labelledby="ql-delete-title">
     <form class="ql-delete-form" method="post" data-questline-delete-form>
@@ -136,5 +144,6 @@
         <button class="ql-delete-confirm" type="submit">DELETE MAP</button>
       </div>
     </form>
-  </dialog>
+    </dialog>
+  {% endif %}
 {% endblock %}

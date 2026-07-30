@@ -15,6 +15,7 @@ urlpatterns = [
         views.DeleteQuestlineView.as_view(),
         name="questline-delete",
     ),
+    path("<int:pk>/accept/", views.AcceptQuestlineView.as_view(), name="accept"),
     path(
         "<int:pk>/map-public",
         views.PublicQuestlineDetailView.as_view(),

@@ -1,15 +1,17 @@
 {% extends 'common/base.html' %}
 {% load static %}
-
 {% block extra_css %}
-  <link rel="stylesheet" href="{% static 'questlines/css/questline-map.css' %}">
+  <link rel="stylesheet"
+        href="{% static 'questlines/css/questline-map.css' %}">
   <link rel="stylesheet" href="{% static 'questlines/css/map-public.css' %}">
 {% endblock %}
-
+{% block extra_js %}
+  <script src="{%static 'questlines/js/map.js' %}" type="module" defer></script>
+{% endblock %}
 {% block content %}
   <main class="map-page public-map">
-    <a class="public-map-back" href="#">← BACK TO EXPLORE</a>
-
+    <a class="public-map-back"
+       href="{% url 'explore' %}?page={{ request.GET.page }}&q={{ request.GET.q|urlencode }}">← BACK TO EXPLORE</a>
     <header class="public-map-charter">
       <div class="public-map-copy">
         <div class="public-map-title-row">
@@ -18,82 +20,100 @@
               <span class="logo-sm-field"><span class="logo-sm-mark"></span></span>
             </span>
           </span>
-          <h1 class="public-map-title">QUESTLINE TITLE</h1>
+          <h1 class="public-map-title">{{ questline.title }}</h1>
         </div>
-        <p class="public-map-description">The Questline description goes here. This is the map-maker's promise: where the route leads, what it covers, and who it is meant to guide.</p>
+        <p class="public-map-description">{{ questline.description }}</p>
         <div class="public-map-byline">
-          <span>CHARTED BY <strong>[AUTHOR]</strong></span>
-          <span>[CATEGORY]</span>
-          <span>[DIFFICULTY]</span>
+          <span>CHARTED BY <strong>{{ questline.author.username }}</strong></span>
+          <span>{{ questline.category }}</span>
+          <span>{{ questline.get_difficulty_display }}</span>
         </div>
       </div>
-
       <aside class="public-map-decision" aria-label="Questline action">
-        {% comment %}
-          USER WIRING: render exactly one truthful action here:
-          guest -> Login to Accept; authenticated non-owner -> Accept POST form;
-          owner -> Edit Map (Start/Continue arrives with Enrollment).
-        {% endcomment %}
-        <div class="public-map-action-option">
-          <a class="public-map-primary-action" href="#">
-            <span>ACCEPT QUESTLINE</span>
-          </a>
-        </div>
+        {% if request.user == questline.author %}
+          <div class="public-map-action-option">
+            <a class="public-map-primary-action"
+               href="{% url 'map-edit' questline.pk %}">
+              <span>EDIT QUESTLINE</span>
+            </a>
+          </div>
+        {% elif request.user.is_authenticated %}
+          {% if request.GET.accepted == "1" %}
+            <div class="public-map-action-option public-map-action-option--accepted">
+              <div class="public-map-primary-action public-map-primary-action--accepted">
+                <span>ACCEPTED ✓</span>
+              </div>
+            </div>
+          {% else %}
+            <form method="POST"
+                  action="{% url 'accept' questline.pk %}?page={{ request.GET.page }}&q={{ request.GET.q|urlencode }}">
+              {% csrf_token %}
+              <div class="public-map-action-option">
+                <button class="public-map-primary-action">
+                  <span>ACCEPT QUESTLINE</span>
+                </button>
+              </div>
+            </form>
+          {% endif %}
+        {% else %}
+          <div class="public-map-action-option">
+            <a class="public-map-primary-action"
+               href="{% url 'login' %}{% if request.get_full_path %}?next={{ request.get_full_path|urlencode }}{% endif %}">
+              <span>LOGIN TO ACCEPT</span>
+            </a>
+          </div>
+        {% endif %}
       </aside>
     </header>
-
     <section class="public-map-board" aria-labelledby="public-map-heading">
       <div class="map-heading-row public-map-heading-row">
         <h2 id="public-map-heading" class="map-title">✦ THE QUEST MAP</h2>
-        <p class="map-hint">click a Quest to inspect its description and Objectives</p>
       </div>
-
       <div class="legend public-map-legend">
-        <div><span class="public-map-key">■</span> quest</div>
-        <div><span class="public-map-key public-map-key--optional">■</span> optional path</div>
-        <div class="sep">⛓ lines show prerequisites</div>
+        <div>
+          <span class="public-map-key" aria-hidden="true"></span> quest
+        </div>
+        <div>
+          <span class="public-map-key public-map-key--optional" aria-hidden="true"></span> optional path
+        </div>
       </div>
-
       <div class="map-scroll public-map-scroll">
         <div class="map-canvas public-map-canvas">
-          {% comment %}
-            USER WIRING: render prerequisite SVG paths and position every Quest
-            from its stored coordinates. The sample route below is visual only.
-          {% endcomment %}
-          <svg class="map-edges" viewBox="0 0 990 680" aria-hidden="true">
-            <path class="map-edge" d="M 235 154 C 235 230, 455 230, 455 306"></path>
-            <path class="map-edge is-optional" d="M 570 366 C 650 366, 690 366, 770 366"></path>
+          <svg class="map-edges" data-edges>
           </svg>
-
-          <div class="qgroup public-map-quest" style="left: 120px; top: 90px;">
-            <a class="qcard qcard-draft" href="#">
-              <div class="crumb">QUEST 1</div>
-              <div class="qtitle">FIRST QUEST TITLE</div>
-            </a>
-          </div>
-
-          <div class="qgroup public-map-quest" style="left: 340px; top: 305px;">
-            <a class="qcard qcard-draft" href="#">
-              <div class="crumb">QUEST 2</div>
-              <div class="qtitle">NEXT QUEST TITLE</div>
-            </a>
-          </div>
-
-          <div class="qgroup public-map-quest" style="left: 655px; top: 305px;">
-            <a class="qcard qcard-draft qcard-optional" href="#">
-              <span class="optional-flag">OPTIONAL PATH</span>
-              <div class="crumb">SIDE QUEST</div>
-              <div class="qtitle">OPTIONAL QUEST TITLE</div>
-            </a>
-          </div>
-
-          {% comment %}
-            USER WIRING: replace the sample nodes above with the Quest loop, then
-            render/reuse one read-only quest-preview dialog per Quest outside main.
-            The user owns all click/dialog JavaScript.
-          {% endcomment %}
+          {% for quest in questline.quests.all %}
+            <div class="qgroup public-map-quest"
+                 data-quest-id="{{ quest.pk }}"
+                 style="left:{{ quest.coord_x }}px;
+                        top:{{ quest.coord_y }}px"
+                 data-prerequisites="{% for prerequisite in quest.prerequisite_quests.all %}{{ prerequisite.pk }}{% if not forloop.last %},{% endif %}{% endfor %}">
+              <a class="qcard qcard-draft{% if quest.is_optional %} qcard-optional{% endif %}"
+                 draggable="false"
+                 href="#preview-{{ quest.pk }}">
+                {% if quest.is_optional %}<div class="optional-flag">OPTIONAL PATH</div>{% endif %}
+                <div class="crumb">
+                  {% if quest.is_optional %}
+                    SIDE QUEST
+                  {% else %}
+                    QUEST {{ forloop.counter }}
+                  {% endif %}
+                </div>
+                <div class="qtitle">{{ quest.title }}</div>
+              </a>
+            </div>
+          {% empty %}
+            <div class="map-empty" data-empty>
+              <div class="public-map-empty-marker">
+                <span class="label">NO QUESTS YET</span>
+              </div>
+              <p class="map-empty-text">The Adventure Guild is still crafting this one.</p>
+            </div>
+          {% endfor %}
         </div>
       </div>
     </section>
   </main>
+  {% for quest in questline.quests.all %}
+    {% include "questlines/_quest-preview.html" with index=forloop.counter total=questline.quests.count %}
+  {% endfor %}
 {% endblock %}

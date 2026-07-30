@@ -1,7 +1,8 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import transaction
 from django.http import JsonResponse
 from django.http.response import HttpResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.views import generic as views
 
@@ -12,7 +13,7 @@ from questlines.forms import (
     QuestlineStatusForm,
 )
 from questlines.mixins import ObjectiveSaveMixin
-from questlines.models import Quest, Questline
+from questlines.models import ChecklistObjective, Quest, Questline, SliderObjective
 
 # The quest views are AJAX-only: the map's drawer POSTs to them and they answer
 # with JSON, never a page. LoginRequiredMixin proves WHO you are; the get_queryset
@@ -30,6 +31,91 @@ class CreateQuestlineView(LoginRequiredMixin, views.CreateView):
     def form_valid(self, form):
         form.instance.author = self.request.user  # the one field the form can't ask for
         return super().form_valid(form)
+
+
+# Deep copy a questline
+class AcceptQuestlineView(LoginRequiredMixin, views.View):
+    # 0. Rollback boundary - making the copy atomic
+    @transaction.atomic
+    # 1. Request must be a post
+    def post(self, request, pk):
+        # 2. Get all questlines that are public and not the user's
+        eligible_questlines = Questline.objects.filter(
+            status=Questline.Status.PUBLIC
+        ).exclude(author=request.user)
+        # 3. Get the specific questline. `pk` comes from the route url `<int:pk>/accept/`
+        source = get_object_or_404(eligible_questlines, pk=pk)
+        # 4. Copy the questline - create constructs and saves the new database row immediately
+        copy = Questline.objects.create(
+            title=source.title,
+            description=source.description,
+            category=source.category,
+            difficulty=source.difficulty,
+            author=request.user,
+            status=Questline.Status.PRIVATE,
+        )
+        # 5. Clone the Quest rows without prerequisites yet
+        quest_map = {}
+        for source_quest in source.quests.all():
+            copied_quest = Quest.objects.create(
+                # Copy the Quest fields from the source
+                title=source_quest.title,
+                description=source_quest.description,
+                is_optional=source_quest.is_optional,
+                note=source_quest.note,
+                coord_x=source_quest.coord_x,
+                coord_y=source_quest.coord_y,
+                questline=copy,
+            )
+            # 5.1 Copy the objectives
+            for source_objective in source_quest.objectives.all():
+                if source_objective.objective_type == "checklistobjective":
+                    ChecklistObjective.objects.create(
+                        quest=copied_quest,
+                        order=source_objective.order,
+                        title=source_objective.title,
+                        description=source_objective.description,
+                    )
+                elif source_objective.objective_type == "sliderobjective":
+                    source_slider = source_objective.sliderobjective
+                    SliderObjective.objects.create(
+                        quest=copied_quest,
+                        order=source_objective.order,
+                        title=source_objective.title,
+                        description=source_objective.description,
+                        min_value=source_slider.min_value,
+                        max_value=source_slider.max_value,
+                        target_value=source_slider.target_value,
+                    )
+
+            quest_map[source_quest.pk] = copied_quest
+        # 6. Now iterate the prerequisites
+        # 6.1 Loop through every Quest belonging to the original Questline
+        for source_quest in source.quests.all():
+            # 6.2 Uses the original Quest’s primary key to retrieve its corresponding copied Quest
+            copied_quest = quest_map[source_quest.pk]
+            # 6.3 Fresh list for this copied Quest's prerequisite relationship
+            copied_prerequisites = []
+
+            # 6.4 Loops through every Quest required by the original Quest
+            for source_prerequisite in source_quest.prerequisite_quests.all():
+                # 6.5 Finds the copied version of each original prerequisite and adds it to the list. This prevents the new Quest from linking back to the original Questline
+                copied_prerequisites.append(quest_map[source_prerequisite.pk])
+
+            # 6.6 Replaces the copied Quest’s many-to-many prerequisite relationships with that translated list. An empty list correctly means it has no prerequisites.
+            copied_quest.prerequisite_quests.set(copied_prerequisites)
+
+        # Build the redirect url, preserve the page and the search input
+        redirect_url = reverse("map-public", kwargs={"pk": source.pk})
+        # Adding temporary success state to the redirect
+        query_parameters = request.GET.copy()
+        query_parameters["accepted"] = "1"
+        query_string = query_parameters.urlencode()
+
+        if query_string:
+            redirect_url = f"{redirect_url}?{query_string}"
+
+        return redirect(redirect_url)
 
 
 class EditQuestlineView(LoginRequiredMixin, views.UpdateView):

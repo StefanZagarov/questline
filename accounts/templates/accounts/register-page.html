@@ -11,7 +11,7 @@
       <header class="gate-brand">
         <div class="logo-diamond">◆</div>
         <h1 class="gate-title">QUESTLINE</h1>
-        <p class="gate-tagline">a new name is entered in the guild ledger.</p>
+        <p class="gate-tagline"><a class="pixel-link" href="{% url 'explore' %}">EXPLORE PUBLIC QUESTLINES →</a></p>
       </header>
       <section class="gate-card">
         <h2 class="card-heading">✦ CREATE YOUR ADVENTURER</h2>
@@ -41,7 +41,8 @@
           <button class="btn btn-primary" type="submit">⚔ BEGIN YOUR LEGEND</button>
         </form>
         <footer class="card-foot">
-          Already sworn in? <a class="pixel-link" href="{% url 'login' %}">RETURN TO THE GATES →</a>
+          Already sworn in? <a class="pixel-link"
+             href="{% url 'login' %}{% if request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}">RETURN TO THE GATES →</a>
         </footer>
       </section>
     </div>

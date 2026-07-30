@@ -347,6 +347,7 @@ a.brand-row:focus-visible {
   background: var(--ink);
   border: 2px solid var(--gold);
   padding: 5px 10px;
+  text-decoration: none;
 }
 .leave-btn {
   background: transparent;

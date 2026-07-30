@@ -25,10 +25,10 @@
       <form method="POST" action="{% url 'questline-status' questline.pk %}">
         {% csrf_token %}
         <button name="status"
-                value="draft"
-                class="ql-card-menu-action ql-card-menu-action--draft">
-          <span aria-hidden="true">✎</span>
-          <span>DRAFT</span>
+                value="public"
+                class="ql-card-menu-action ql-card-menu-action--public">
+          <span aria-hidden="true">★</span>
+          <span>PUBLIC</span>
         </button>
         <button name="status"
                 value="private"
@@ -37,10 +37,10 @@
           <span>PRIVATE</span>
         </button>
         <button name="status"
-                value="public"
-                class="ql-card-menu-action ql-card-menu-action--public">
-          <span aria-hidden="true">★</span>
-          <span>PUBLIC</span>
+                value="draft"
+                class="ql-card-menu-action ql-card-menu-action--draft">
+          <span aria-hidden="true">✎</span>
+          <span>DRAFT</span>
         </button>
       </form>
       <div class="ql-card-menu-divider"></div>
