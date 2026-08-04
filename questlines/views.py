@@ -62,7 +62,6 @@ class AcceptQuestlineView(LoginRequiredMixin, views.View):
                 title=source_quest.title,
                 description=source_quest.description,
                 is_optional=source_quest.is_optional,
-                note=source_quest.note,
                 coord_x=source_quest.coord_x,
                 coord_y=source_quest.coord_y,
                 questline=copy,

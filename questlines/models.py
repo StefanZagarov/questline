@@ -38,7 +38,6 @@ class Quest(models.Model):
     title = models.CharField(max_length=100)
     description = models.TextField(max_length=99999, blank=True)
     is_optional = models.BooleanField(default=False)
-    note = models.TextField(max_length=99999, blank=True)
     coord_x = models.FloatField(default=0)
     coord_y = models.FloatField(default=0)
     # related_name - makes questline.quest_set to read as quests
