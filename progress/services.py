@@ -15,6 +15,9 @@ def get_questline_progress(enrollment):
     quests = enrollment.questline.quests.prefetch_related(
         "prerequisite_quests", "objectives"
     )
+    # The quests above are the only ones carrying the prefetched objectives and prerequisites.
+    # quest.prerequisite_quests.all() hands back fresh Quest objects with empty caches, so the
+    # recursion looks each prerequisite up here and walks the loaded one instead.
     quests_by_id = {}
     for quest in quests:
         quests_by_id[quest.id] = quest
@@ -70,9 +73,42 @@ def get_questline_progress(enrollment):
         "percent_main_completed": percent_main_quests_completed,
         "percent_optional_completed": percent_optional_quests_completed,
     }
-    questline_progress["quests"] = quests_state
+    questline_progress["quests"] = order_quest_states(quests_state, invalid_quests_set)
 
     return questline_progress
+
+
+def order_quest_states(quests_state, invalid_quests_set):
+    pending = quests_state.copy()
+    ordered = {}
+
+    # Loop until pending is empty. Since quests can be skipped in the loop if their prerequisite quest is missing from the ordered list, this makes sure the pending list is repeated until all quests are moved from the pending to the ordered dict
+    while len(pending) > 0:
+        snapshot = pending.copy()
+
+        # sorted() - Before we iterate, we must sort the items by their id. This will help us in a case of two quests assigned to the same prerequisite quest to assign in proper order - the id will be used for the z-index, so the older it is, the smaller the number
+        for key, quest_state in sorted(snapshot.items()):
+            is_eligible = True
+
+            # Check if its prerequisites exist before we map it to the ordered list
+            for prerequisite in quest_state["quest"].prerequisite_quests.all():
+                if prerequisite.id not in ordered:
+                    is_eligible = False
+                    break
+
+            if not is_eligible:
+                continue
+
+            ordered[key] = pending.pop(key)
+
+        # If nothing got moved then something is broken in the quest chain
+        if len(pending) == len(snapshot):
+            for key, quest_state in pending.items():
+                invalid_quests_set.add(quest_state["quest"].id)
+            # We still need to return whatever is ordered, as per this function's job. So return what has been ordered and the still pending quests under a new dict that joins the two with the union operator (|)
+            return ordered | pending
+
+    return ordered
 
 
 # Returns one quest's is_unlocked / raw_complete / effective_complete.
@@ -115,6 +151,7 @@ def get_quest_state(
             # If the quest is a main quest, and the previous quest is optional, then do not block the main quest's progress
             if not quest.is_optional and prev_quest.is_optional:
                 continue
+            # The loaded twin of prev_quest, so the call below reads cached relations.
             if not get_quest_state(
                 quests_by_id[prev_quest.id],
                 objective_progress,
