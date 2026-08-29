@@ -23,4 +23,5 @@ urlpatterns = [
     path("auth/", include("accounts.urls")),
     path("", include("common.urls")),
     path("questline/", include("questlines.urls")),
+    path("questline/adventure/", include("progress.urls")),
 ]

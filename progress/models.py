@@ -33,6 +33,7 @@ class ObjectiveProgress(models.Model):
     enrollment = models.ForeignKey(to=Enrollment, on_delete=models.CASCADE)
     objective = models.ForeignKey(to=Objective, on_delete=models.CASCADE)
     is_complete = models.BooleanField(default=False)
+    # Bad name? Hold current slider value
     current_value = models.IntegerField(null=True)
 
 
