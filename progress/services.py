@@ -54,15 +54,6 @@ def get_questline_progress(enrollment):
             completed_main_quests += 1
         quests_state[quest.id] = quest_state
 
-    percent_main_quests_completed = 0
-    percent_optional_quests_completed = 0
-    if main_quests_count > 0:
-        percent_main_quests_completed = completed_main_quests * 100 // main_quests_count
-    if optional_quests_count > 0:
-        percent_optional_quests_completed = (
-            completed_optional_quests * 100 // optional_quests_count
-        )
-
     # Populate the payload
     questline_progress["invalid_quests"] = invalid_quests_set
     questline_progress["quests_summary"] = {
@@ -70,8 +61,6 @@ def get_questline_progress(enrollment):
         "optional_total": optional_quests_count,
         "completed_main": completed_main_quests,
         "completed_optional": completed_optional_quests,
-        "percent_main_completed": percent_main_quests_completed,
-        "percent_optional_completed": percent_optional_quests_completed,
     }
     questline_progress["quests"] = order_quest_states(quests_state, invalid_quests_set)
 

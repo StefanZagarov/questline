@@ -1,0 +1,387 @@
+/* Adventure-only presentation. Shared map geometry and card states live in
+   questlines/css/questline-map.css. */
+
+.adventure-topbar-inner {
+  gap: 20px;
+}
+
+.adventure-topbar .topbar-quest {
+  min-width: 0;
+}
+
+.adventure-topbar .quest-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adventure-progress {
+  flex: 0 0 290px;
+}
+
+.adventure-progress .bar-track {
+  overflow: hidden;
+}
+
+.adventure-progress .bar-fill {
+  transition: width 220ms ease;
+}
+
+.adventure-bonus {
+  margin-top: 5px;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--gold-bright);
+  text-align: right;
+}
+
+.adventure-page {
+  padding-top: 34px;
+}
+
+.adventure-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 8px;
+}
+
+.adventure-kicker {
+  margin: 0 0 4px;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--gold-deep);
+}
+
+.adventure-legend {
+  margin-bottom: 18px;
+}
+
+.adventure-warning {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+  padding: 13px 16px;
+  color: #6d2117;
+  background: #f2d4c6;
+  border: 3px solid #8f2d20;
+  box-shadow: 4px 4px 0 rgba(82, 28, 19, 0.24);
+}
+
+.adventure-warning[hidden] {
+  display: none;
+}
+
+.adventure-warning-glyph {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 30px;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 20px;
+  color: #f7e9d0;
+  background: #8f2d20;
+  border: 2px solid #5b1c14;
+}
+
+.adventure-warning strong {
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 13px;
+  letter-spacing: 1.5px;
+}
+
+.adventure-warning p {
+  margin: 2px 0 0;
+}
+
+.adventure-board {
+  margin-top: 12px;
+}
+
+.adventure-canvas {
+  min-height: 680px;
+  background:
+    radial-gradient(circle at center, rgba(201, 150, 46, 0.09), transparent 55%),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 79px,
+      rgba(138, 106, 30, 0.055) 80px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 79px,
+      rgba(138, 106, 30, 0.055) 80px
+    );
+}
+
+.adventure-quest {
+  cursor: default;
+}
+
+.adventure-card-frame {
+  position: relative;
+  transition: transform 120ms ease;
+}
+
+.adventure-card-frame:hover {
+  transform: translate(-2px, -2px);
+}
+
+.adventure-card-frame .qcard {
+  min-height: 68px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.adventure-quest:hover .adventure-card-frame .qcard {
+  transform: none;
+}
+
+.quest-objective-toggle {
+  position: absolute;
+  z-index: 1;
+  top: 3px;
+  right: 3px;
+  bottom: 3px;
+  width: 28px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.qcard-done + .quest-objective-toggle {
+  color: #f0e2bc;
+}
+
+.qcard-locked + .quest-objective-toggle {
+  color: var(--muted);
+}
+
+.quest-objective-toggle svg {
+  width: 16px;
+  height: 16px;
+  transform-origin: center;
+  transition: transform 140ms ease;
+}
+
+.quest-objective-toggle path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+}
+
+.quest-objective-toggle:hover {
+  background: rgba(58, 44, 21, 0.1);
+}
+
+.quest-objective-toggle:focus-visible {
+  background: transparent;
+  outline: 2px solid var(--ink);
+  outline-offset: -5px;
+}
+
+.quest-objective-toggle[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
+
+.objective-quick-view {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 260px;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-6px);
+  transition:
+    opacity 140ms ease,
+    transform 140ms ease,
+    visibility 0s linear 140ms;
+}
+
+.objective-quick-view.is-open {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+  transition-delay: 0s;
+}
+
+.objective-quick-header {
+  display: none;
+}
+
+.objective-quick-count {
+  color: var(--gold-deep);
+  white-space: nowrap;
+}
+
+.objective-quick-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+  padding-left: 30px;
+  margin-top: 10px;
+  margin-left: 10px;
+}
+
+.objective-quick-row {
+  position: relative;
+  width: fit-content;
+  min-height: 33px;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  max-width: 225px;
+  padding: 5px 10px;
+  color: var(--ink);
+  background: #f2dca0;
+  border: 2px solid var(--ink);
+  box-shadow: 3px 3px 0 rgba(58, 44, 21, 0.2);
+}
+
+.objective-quick-row::before {
+  content: "–";
+  position: absolute;
+  top: 50%;
+  left: -14px;
+  color: var(--muted);
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 15px;
+  transform: translateY(-50%);
+}
+
+.objective-quick-row.is-complete {
+  background: #e4ebd6;
+}
+
+.objective-quick-icon,
+.objective-quick-type,
+.objective-quick-value {
+  font-family: "Pixelify Sans", sans-serif;
+}
+
+.objective-quick-icon {
+  color: var(--gold-deep);
+  text-align: center;
+}
+
+.objective-quick-row.is-complete .objective-quick-icon {
+  color: var(--green);
+}
+
+.objective-quick-title {
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.objective-quick-row.is-complete .objective-quick-title {
+  color: #5c6540;
+  text-decoration: line-through;
+}
+
+.objective-quick-type,
+.objective-quick-value {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.objective-mini-track {
+  grid-column: 2 / -1;
+  width: 130px;
+  max-width: 100%;
+  height: 7px;
+  overflow: hidden;
+  background: #e7d8b4;
+  border: 1px solid var(--ink);
+}
+
+.objective-mini-fill {
+  display: block;
+  height: 100%;
+  background: var(--gold);
+}
+
+.adventure-quest.is-invalid .qcard {
+  outline: 4px solid #8f2d20;
+  outline-offset: 4px;
+}
+
+.map-edge.is-complete {
+  stroke: var(--green);
+}
+
+.map-edge.is-locked {
+  stroke: #9c9077;
+}
+
+.adventure-empty[hidden] {
+  display: none;
+}
+
+.adventure-empty-marker {
+  width: 74px;
+  height: 74px;
+  display: grid;
+  place-items: center;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 42px;
+  color: var(--gold-deep);
+  border: 3px dashed #c3b183;
+}
+
+.adventure-empty strong {
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 13px;
+  letter-spacing: 2px;
+  color: var(--muted-2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .adventure-card-frame,
+  .quest-objective-toggle svg,
+  .objective-quick-view {
+    transition: none;
+  }
+}
+
+@media (max-width: 860px) {
+  .adventure-topbar-inner {
+    flex-wrap: wrap;
+  }
+
+  .adventure-topbar .topbar-divider,
+  .adventure-topbar .wordmark {
+    display: none;
+  }
+
+  .adventure-topbar .topbar-quest {
+    flex: 1 1 240px;
+  }
+
+  .adventure-progress {
+    flex: 1 1 100%;
+  }
+
+  .adventure-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+}

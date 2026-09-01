@@ -1,0 +1,146 @@
+{% extends "common/base.html" %}
+{% load static %}
+{% block extra_css %}
+  <link rel="stylesheet"
+        href="{% static 'questlines/css/questline-map.css' %}">
+  <link rel="stylesheet" href="{% static 'progress/css/adventure.css' %}">
+{% endblock %}
+{% block extra_js %}
+  <script src="{% static 'progress/js/adventure.js' %}" type="module" defer></script>
+{% endblock %}
+{% block topbar %}
+  <header class="topbar adventure-topbar">
+    <div class="topbar-inner adventure-topbar-inner">
+      <a class="brand-row" href="{% url 'home' %}" aria-label="Questline home">
+        <span class="logo-sm" aria-hidden="true">
+          <span class="logo-sm-field"><span class="logo-sm-mark"></span></span>
+        </span>
+        <span class="wordmark">QUESTLINE</span>
+      </a>
+      <span class="topbar-divider" aria-hidden="true"></span>
+      <div class="topbar-quest">
+        <div class="kicker">⚑ ADVENTURE IN PROGRESS</div>
+        <!-- USER: bind the enrolled Questline title. -->
+        <div class="quest-name">QUESTLINE TITLE</div>
+      </div>
+      <div class="topbar-progress adventure-progress">
+        <div class="bar-labels">
+          <!-- USER: bind completed/total required Quests and required progress. -->
+          <span>0 / 0 QUESTS</span>
+          <span>0%</span>
+        </div>
+        <div class="bar-track" role="progressbar" aria-label="Required progress">
+          <!-- USER: bind the required progress width and ARIA values. -->
+          <div class="bar-fill" style="width: 0%"></div>
+        </div>
+        <!-- USER: bind optional Objective progress. -->
+        <div class="adventure-bonus">✦ BONUS 0%</div>
+      </div>
+    </div>
+  </header>
+{% endblock %}
+{% block content %}
+  <main class="map-page adventure-page">
+    <header class="adventure-heading">
+      <div>
+        <p class="adventure-kicker">YOUR ACTIVE ROUTE</p>
+        <div class="map-heading-row">
+          <a class="map-back"
+             href="{% url 'home' %}"
+             title="Back to the guild hall">← BACK</a>
+          <h1 class="map-title">✦ THE QUEST MAP</h1>
+        </div>
+      </div>
+      <p class="map-hint">Open a Quest's quick view to inspect its Objectives.</p>
+    </header>
+    <div class="legend adventure-legend" aria-label="Quest map legend">
+      <div>
+        <span class="sw-done">■</span> conquered
+      </div>
+      <div>
+        <span class="sw-open">■</span> open
+      </div>
+      <div>
+        <span class="sw-sealed">■</span> sealed
+      </div>
+      <div class="sep">▣ checklist · ◄► slider · ╌ optional</div>
+    </div>
+    <!-- USER: show this warning only when calculated_data.invalid_quests is non-empty. -->
+    <section class="adventure-warning" role="alert" hidden>
+      <span class="adventure-warning-glyph" aria-hidden="true">!</span>
+      <div>
+        <strong>BROKEN QUEST PATH</strong>
+        <p>Some Quests form an invalid chain. Their progress cannot unlock normally.</p>
+      </div>
+    </section>
+    <section class="adventure-board" aria-label="Adventure Quest map">
+      <div class="map-scroll">
+        <div class="map-canvas adventure-canvas">
+          <svg class="map-edges" data-edges aria-hidden="true">
+          </svg>
+          <!-- USER: begin the calculated_data.quests loop here. Bind coordinates,
+               prerequisite IDs, state classes, optional/invalid state, and z-index. -->
+          <article class="qgroup adventure-quest"
+                   data-quest-id=""
+                   data-prerequisites=""
+                   style="left: 120px;
+                          top: 70px;
+                          z-index: 1">
+            <div class="adventure-card-frame">
+              <a class="qcard qcard-open glow" href="#">
+                <!-- USER: render this flag only for optional Quests. -->
+                <span class="optional-flag" hidden>OPTIONAL PATH</span>
+                <span class="crumb">QUEST 1</span>
+                <!-- USER: bind the Quest title. -->
+                <span class="qtitle">QUEST TITLE</span>
+              </a>
+              <!-- USER: bind matching aria-controls and quick-view id values. -->
+              <button class="quest-objective-toggle"
+                      type="button"
+                      aria-expanded="false"
+                      aria-label="Show Quest Objectives">
+                <svg viewBox="0 0 16 16" aria-hidden="true">
+                  <path d="M 4 6 L 8 10 L 12 6"></path>
+                </svg>
+              </button>
+            </div>
+            <!-- USER: toggle is-open and bind a unique id. -->
+            <section class="objective-quick-view" aria-label="Quest Objectives">
+              <header class="objective-quick-header">
+                <span>✦ OBJECTIVES</span>
+                <!-- USER: bind completed and total Objective counts. -->
+                <span class="objective-quick-count">1 / 2</span>
+              </header>
+              <div class="objective-quick-list">
+                <!-- USER: loop over quest_state.objectives here and bind type,
+                     title, completion state, current value, and Objective ratio. -->
+                <div class="objective-quick-row is-complete">
+                  <span class="objective-quick-icon" aria-hidden="true">✓</span>
+                  <span class="objective-quick-title">COMPLETED OBJECTIVE</span>
+                  <span class="objective-quick-type">▣</span>
+                </div>
+                <div class="objective-quick-row">
+                  <span class="objective-quick-icon" aria-hidden="true">◄►</span>
+                  <span class="objective-quick-title">SLIDER OBJECTIVE</span>
+                  <!-- USER: bind current Slider value. -->
+                  <span class="objective-quick-value">0</span>
+                  <span class="objective-mini-track" aria-hidden="true">
+                    <!-- USER: bind this width to the Objective ratio. -->
+                    <span class="objective-mini-fill" style="width: 0%"></span>
+                  </span>
+                </div>
+              </div>
+            </section>
+          </article>
+          <!-- USER: end the Quest loop here. -->
+          <!-- USER: show this branch only when the ordered Quest mapping is empty. -->
+          <div class="map-empty adventure-empty" hidden>
+            <div class="adventure-empty-marker" aria-hidden="true">◇</div>
+            <strong>NO QUESTS TO CHART</strong>
+            <p class="map-empty-text">This adventure has no route yet.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+{% endblock %}

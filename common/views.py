@@ -1,7 +1,8 @@
 from django.db.models import Q
-from django.db.models.functions import Lower
 from django.views.generic import ListView
 
+from progress.models import Enrollment
+from progress.services import get_questline_progress
 from questlines.models import Questline
 
 
@@ -21,6 +22,25 @@ class HomePageView(ListView):
         context["drafts"] = mine.filter(status=Questline.Status.DRAFT)
         context["private"] = mine.filter(status=Questline.Status.PRIVATE)
         context["public"] = mine.filter(status=Questline.Status.PUBLIC)
+
+        enrollments = Enrollment.objects.filter(
+            enrolled_user=self.request.user, questline__in=mine
+        )
+
+        progress_by_questline = {}
+        for enrollment in enrollments:
+            progress = get_questline_progress(enrollment)
+
+            progress_by_questline[enrollment.questline_id] = {
+                "enrollment_id": enrollment.pk,
+                "completed_quests": progress["quests_summary"]["completed_main"],
+                "total_quests": progress["quests_summary"]["main_total"],
+                "main_progress_bar": progress["main_questline_progress_ratio"],
+                "optional_progress_bar": progress["optional_questline_progress_ratio"],
+            }
+
+        context["progress_by_questline"] = progress_by_questline
+
         return context
 
 

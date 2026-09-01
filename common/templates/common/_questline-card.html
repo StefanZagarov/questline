@@ -1,14 +1,13 @@
+{% load custom_filters %}
 {% comment %}
   One questline card on the home page. Rendered by each status section in
   home-page.html via {% include %}.
 
   Params (passed on the include's `with`):
     questline  — the Questline to show
-    cta        — button label text (e.g. "▶ OPEN THE MAP")
-    cta_style  — extra button class (cta-gold / cta-quiet / cta-dark)
 
-  No progress bar or enrollment badge here: progress is per-(user, enrollment),
-  not a property of the map itself, so it arrives with the progress models.
+  Progress is per-(user, enrollment), not a property of the map itself, so the
+  card resolves the current user's progress from progress_by_questline.
 {% endcomment %}
 <article class="ql-card">
   {% comment %}
@@ -59,9 +58,38 @@
   </div>
   <h3 class="ql-title">{{ questline.title }}</h3>
   <p class="ql-desc">{{ questline.description }}</p>
-  <div class="mini-bar-labels">
-    <span>{{ questline.quests.count }} QUEST{{ questline.quests.count|pluralize }}</span>
-  </div>
-  <a class="ql-cta {{ cta_style }}"
-     href="{% url 'map-edit' questline.pk %}">{{ cta }}</a>
+  {% with card_progress=progress_by_questline|get_item:questline.pk %}
+    {% if card_progress %}
+      {% widthratio card_progress.main_progress_bar 1 100 as main_progress_percent %}
+      <div>
+        <div class="mini-bar-labels">
+          <span>{{ card_progress.completed_quests }} / {{ card_progress.total_quests }} QUESTS</span>
+          <span>{{ main_progress_percent }}%</span>
+        </div>
+        <div class="mini-bar-track">
+          <div class="bar-fill" style="width: {{ main_progress_percent }}%;"></div>
+        </div>
+      </div>
+    {% else %}
+      <div class="mini-bar-labels">
+        <span>{{ questline.quests.count }} QUEST{{ questline.quests.count|pluralize|upper }}</span>
+      </div>
+    {% endif %}
+    {% if questline.status == "draft" %}
+      <a class="ql-cta cta-gold" href="{% url 'map-edit' questline.pk %}">✎ DRAW THE MAP</a>
+    {% elif not card_progress %}
+      <form class="ql-cta-form"
+            method="POST"
+            action="{% url 'start-adventure' questline.pk %}">
+        {% csrf_token %}
+        <button class="ql-cta cta-dark">⚐ SET FORTH</button>
+      </form>
+    {% elif card_progress.completed_quests == card_progress.total_quests %}
+      <a class="ql-cta cta-quiet"
+         href="{% url 'adventure' card_progress.enrollment_id %}">↺ REVISIT THE MAP</a>
+    {% elif card_progress %}
+      <a class="ql-cta cta-gold"
+         href="{% url 'adventure' card_progress.enrollment_id %}">▶ CONTINUE THE QUEST</a>
+    {% endif %}
+  {% endwith %}
 </article>
