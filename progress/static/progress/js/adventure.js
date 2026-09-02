@@ -3,6 +3,62 @@ const edges = document.querySelector("[data-edges]");
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const EDGE_CURVE = 60;
+const VISIBLE_OBJECTIVE_ROWS = 5;
+const CANVAS_BOTTOM_GUTTER = 32;
+const QUICK_VIEW_TRANSITION_MS = 140;
+
+function limitObjectiveLists() {
+  document.querySelectorAll(".objective-quick-list").forEach((list) => {
+    const rows = [...list.querySelectorAll(".objective-quick-row")];
+    list.style.removeProperty("max-height");
+
+    if (rows.length <= VISIBLE_OBJECTIVE_ROWS) return;
+
+    const gap = Number.parseFloat(getComputedStyle(list).rowGap) || 0;
+    const visibleRowsHeight = rows
+      .slice(0, VISIBLE_OBJECTIVE_ROWS)
+      .reduce((height, row) => height + row.getBoundingClientRect().height, 0);
+
+    list.style.maxHeight = `${Math.ceil(
+      visibleRowsHeight + gap * (VISIBLE_OBJECTIVE_ROWS - 1),
+    )}px`;
+  });
+}
+
+function fitAdventureCanvas() {
+  if (!canvas) return;
+
+  const minimumHeight = Number.parseFloat(getComputedStyle(canvas).minHeight) || 680;
+  let requiredHeight = minimumHeight;
+
+  document.querySelectorAll(".adventure-quest").forEach((questGroup) => {
+    let groupBottom = questGroup.offsetTop + questGroup.offsetHeight;
+    const openQuickView = questGroup.querySelector(
+      ".objective-quick-view.is-open",
+    );
+
+    if (openQuickView) {
+      groupBottom = Math.max(
+        groupBottom,
+        questGroup.offsetTop +
+          openQuickView.offsetTop +
+          openQuickView.offsetHeight,
+      );
+    }
+
+    requiredHeight = Math.max(
+      requiredHeight,
+      groupBottom + CANVAS_BOTTOM_GUTTER,
+    );
+  });
+
+  canvas.style.height = `${Math.ceil(requiredHeight)}px`;
+}
+
+function updateAdventureLayout() {
+  limitObjectiveLists();
+  fitAdventureCanvas();
+}
 
 document.querySelectorAll(".quest-objective-toggle").forEach((button) => {
   const questGroup = button.closest(".adventure-quest");
@@ -11,13 +67,29 @@ document.querySelectorAll(".quest-objective-toggle").forEach((button) => {
   if (!quickView) return;
 
   button.addEventListener("click", () => {
-    const isOpen = quickView.classList.toggle("is-open");
+    const isOpen = button.getAttribute("aria-expanded") !== "true";
 
     button.setAttribute("aria-expanded", String(isOpen));
     button.setAttribute(
       "aria-label",
       `${isOpen ? "Hide" : "Show"} Quest Objectives`,
     );
+
+    if (isOpen) {
+      quickView.hidden = false;
+      window.requestAnimationFrame(() => {
+        quickView.classList.add("is-open");
+        updateAdventureLayout();
+      });
+    } else {
+      quickView.classList.remove("is-open");
+      window.setTimeout(() => {
+        if (button.getAttribute("aria-expanded") === "false") {
+          quickView.hidden = true;
+        }
+        updateAdventureLayout();
+      }, QUICK_VIEW_TRANSITION_MS);
+    }
   });
 });
 
@@ -109,6 +181,15 @@ function drawEdges() {
   });
 }
 
+updateAdventureLayout();
 drawEdges();
-window.addEventListener("load", drawEdges);
-window.addEventListener("resize", drawEdges);
+window.addEventListener("load", () => {
+  updateAdventureLayout();
+  drawEdges();
+});
+window.addEventListener("resize", () => {
+  updateAdventureLayout();
+  drawEdges();
+});
+
+document.fonts?.ready.then(updateAdventureLayout);

@@ -1,4 +1,5 @@
 from django.db.models import Q
+from django.db.models.functions import Lower
 from django.views.generic import ListView
 
 from progress.models import Enrollment

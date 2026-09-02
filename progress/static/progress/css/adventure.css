@@ -211,6 +211,10 @@
     visibility 0s linear 140ms;
 }
 
+.objective-quick-view[hidden] {
+  display: none;
+}
+
 .objective-quick-view.is-open {
   visibility: visible;
   opacity: 1;
@@ -233,6 +237,8 @@
   flex-direction: column;
   gap: 8px;
   align-items: flex-start;
+  overflow-y: auto;
+  scrollbar-width: thin;
   padding-left: 30px;
   margin-top: 10px;
   margin-left: 10px;

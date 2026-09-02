@@ -109,6 +109,7 @@ def get_quest_state(
         "raw_complete": False,
         "effective_complete": False,
         "objectives": {},
+        "objectives_summary": {},
     }
 
     # Reaching a quest that is still mid-calculation means the map loops back on itself.
@@ -175,10 +176,17 @@ def get_quest_state(
     )
 
     progress_ratio = 0
+    completed_objectives = 0
     # Map objective progress for each quest
     for objective in quest_objectives:
         current_objective_progress = objective_progress.get(objective.id)
         objective_progress_value = 0
+
+        if (
+            current_objective_progress is not None
+            and current_objective_progress.is_complete
+        ):
+            completed_objectives += 1
 
         match objective.objective_type:
             case "checklistobjective":
@@ -234,6 +242,10 @@ def get_quest_state(
         progress_ratio / len(quest_objectives) if len(quest_objectives) != 0 else 0
     )
     quest_state["quest_progress_ratio"] = quest_progress_ratio
+    quest_state["objectives_summary"] = {
+        "objectives_complete": completed_objectives,
+        "total_objectives": len(quest_objectives),
+    }
 
     memo[quest.id] = quest_state
     visiting_set.remove(quest.id)

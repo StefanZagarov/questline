@@ -40,7 +40,7 @@
       <a class="map-back"
          href="{% url 'home' %}"
          title="Back to the guild hall">← BACK</a>
-      <h1 class="map-title">✦ THE QUEST MAP</h1>
+      <h1 class="map-title">✦ DRAFTING QUESTLINE</h1>
       <div class="map-hint">drag a card to move it · click the card to view a quest</div>
     </div>
     <div class="legend">
@@ -63,8 +63,7 @@
         <button class="map-tool map-tool-primary" type="button" data-open-drawer>+ ADD QUEST</button>
         <a class="map-tool map-tool-primary"
            type="button"
-           href="{% url 'questline-edit' questline.pk %}">~ EDIT QUESTLINE
-        </a>
+           href="{% url 'questline-edit' questline.pk %}">~ EDIT QUESTLINE</a>
         <span class="map-toolbar-sep"></span>
         <span class="map-toolbar-count" data-quest-count>{{ questline.quests.count }} quest{{ questline.quests.count|pluralize }}</span>
       </div>
