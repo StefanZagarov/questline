@@ -234,27 +234,24 @@ objectivesList.addEventListener("click", (e) => {
   target.closest(".objective-row").remove();
 });
 
-// Clamping slider min/max/current values
+// Clamping slider min/goal values
 // Focus out is like blur, but unlike it, it bubbles up
 objectivesList.addEventListener("focusout", (e) => {
   const row = e.target.closest(".objective-row");
   if (!row || row.dataset.type !== "sliderobjective") return;
 
   const minInput = row.querySelector('[data-field="min_value"]');
-  const maxInput = row.querySelector('[data-field="max_value"]');
-  const targetInput = row.querySelector('[data-field="target_value"]');
+  const goalInput = row.querySelector('[data-field="goal_value"]');
 
   let min = Number(minInput.value);
-  let max = Number(maxInput.value);
-  let target = Number(targetInput.value);
+  let goal = Number(goalInput.value);
 
-  if (min > max) {
-    [min, max] = [max, min];
+  if (min > goal) {
+    [min, goal] = [goal, min];
+  } else if (min === goal) {
+    goal += 1;
   }
 
-  target = Math.min(Math.max(target, min), max);
-
   minInput.value = min;
-  maxInput.value = max;
-  targetInput.value = target;
+  goalInput.value = goal;
 });

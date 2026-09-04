@@ -72,8 +72,7 @@ class Quest(models.Model):
             if objective.objective_type == "sliderobjective":
                 slider = getattr(objective, objective.objective_type)
                 entry["min_value"] = slider.min_value
-                entry["max_value"] = slider.max_value
-                entry["target_value"] = slider.target_value
+                entry["goal_value"] = slider.goal_value
             data.append(entry)
         return data
 
@@ -100,15 +99,15 @@ class Objective(models.Model):
 
 class SliderObjective(Objective):
     min_value = models.IntegerField(default=0)
-    max_value = models.IntegerField(default=100)
-    target_value = models.IntegerField(default=50)
+    goal_value = models.IntegerField(default=100)
 
-    # Validate min/max/target like in the UI
+    # Validate min/goal like in the UI
     def save(self, *args, **kwargs):
-        if self.min_value > self.max_value:
-            self.min_value, self.max_value = self.max_value, self.min_value
+        if self.min_value > self.goal_value:
+            self.min_value, self.goal_value = self.goal_value, self.min_value
+        elif self.min_value == self.goal_value:
+            self.goal_value += 1
 
-        self.target_value = min(max(self.target_value, self.min_value), self.max_value)
         super().save(*args, **kwargs)
 
 

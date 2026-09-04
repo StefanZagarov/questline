@@ -26,8 +26,7 @@ class ObjectiveSaveMixin:
                     title=objective["title"],
                     description=objective["description"],
                     min_value=int(objective["min_value"]),
-                    max_value=int(objective["max_value"]),
-                    target_value=int(objective["target_value"]),
+                    goal_value=int(objective["goal_value"]),
                 )
             elif objective["type"] == "checklistobjective":
                 ChecklistObjective.objects.create(

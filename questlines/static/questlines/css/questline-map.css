@@ -771,7 +771,7 @@
   font-family: inherit;
 }
 
-/* slider's min / max / goal — three captioned columns sharing the width */
+/* slider's minimum and goal — two captioned columns sharing the width */
 .objective-row-nums {
   display: flex;
   gap: 10px;
@@ -1078,12 +1078,12 @@
   font-size: 15px;
   color: var(--gold-deep);
 }
-.target-hint {
+.goal-hint {
   font-size: 13px;
   color: var(--muted);
   margin-top: 4px;
 }
-.target-hint strong {
+.goal-hint strong {
   font-weight: 700;
   color: var(--gold-deep);
 }

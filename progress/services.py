@@ -188,6 +188,7 @@ def get_quest_state(
         ):
             completed_objectives += 1
 
+        objective_state = {"title": objective.title, "type": objective.objective_type}
         match objective.objective_type:
             case "checklistobjective":
                 objective_progress_value = (
@@ -205,7 +206,7 @@ def get_quest_state(
                     if sliderobjective.min_value is not None
                     else 0
                 )
-                target_value = sliderobjective.target_value
+                goal_value = sliderobjective.goal_value
                 current_value = (
                     current_objective_progress.current_value
                     if current_objective_progress is not None
@@ -213,12 +214,15 @@ def get_quest_state(
                     else 0
                 )
 
+                objective_state["min_value"] = min_value
+                objective_state["goal_value"] = goal_value
+
                 objective_progress_value = (
                     0
                     if current_objective_progress is None
                     else 1
-                    if target_value == min_value
-                    else (current_value - min_value) / (target_value - min_value)
+                    if goal_value == min_value
+                    else (current_value - min_value) / (goal_value - min_value)
                 )
             case _:
                 pass
@@ -226,17 +230,20 @@ def get_quest_state(
         objective_progress_value = max(0, min(objective_progress_value, 1))
         progress_ratio += objective_progress_value
 
-        quest_state["objectives"][objective.id] = {
-            "title": objective.title,
-            "type": objective.objective_type,
-            "is_complete": current_objective_progress.is_complete
-            if current_objective_progress is not None
-            else False,
-            "current_value": current_objective_progress.current_value
-            if current_objective_progress is not None
-            else None,
-            "objective_progress": objective_progress_value,
-        }
+        objective_state.update(
+            {
+                "is_complete": current_objective_progress.is_complete
+                if current_objective_progress is not None
+                else False,
+                "current_value": current_objective_progress.current_value
+                if current_objective_progress is not None
+                else None,
+                "description": objective.description,
+                "objective_progress": objective_progress_value,
+            }
+        )
+
+        quest_state["objectives"][objective.id] = objective_state
 
     quest_progress_ratio = (
         progress_ratio / len(quest_objectives) if len(quest_objectives) != 0 else 0

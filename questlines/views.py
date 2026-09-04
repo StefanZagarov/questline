@@ -83,8 +83,7 @@ class AcceptQuestlineView(LoginRequiredMixin, views.View):
                         title=source_objective.title,
                         description=source_objective.description,
                         min_value=source_slider.min_value,
-                        max_value=source_slider.max_value,
-                        target_value=source_slider.target_value,
+                        goal_value=source_slider.goal_value,
                     )
 
             quest_map[source_quest.pk] = copied_quest
