@@ -1,3 +1,5 @@
+import json
+
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
@@ -21,6 +23,19 @@ class AdventureView(LoginRequiredMixin, views.DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["progress"] = get_questline_progress(self.object)
+        # Keeping count of every main quest for the "Quest X of Y" label
+        main_index = 1
+        for quest_state in context["progress"]["quests"].values():
+            if not quest_state["quest"].is_optional:
+                quest_state["main_index"] = main_index
+                main_index += 1
+            # Serialize prerequisite titles for the Adventure drawer dataset.
+            quest_state["prerequisite_titles_json"] = json.dumps(
+                [
+                    prerequisite.title
+                    for prerequisite in quest_state["quest"].prerequisite_quests.all()
+                ]
+            )
         return context
 
 

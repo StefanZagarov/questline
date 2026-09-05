@@ -54,6 +54,21 @@ class Quest(models.Model):
     def objectives_json(self):
         return json.dumps(self.objectives_preview)
 
+    @property
+    def preview_json(self):
+        return json.dumps(
+            {
+                "title": self.title,
+                "description": self.description,
+                "is_optional": self.is_optional,
+                "prerequisites": [
+                    prerequisite.title
+                    for prerequisite in self.prerequisite_quests.all()
+                ],
+                "objectives": self.objectives_preview,
+            }
+        )
+
     # This is quest's objectives as a JSON string, for the edit drawer to prefill from.
     # The pen renders it into data-objectives on the edit button (see map.html), and
     # quest-drawer.js JSON.parses it to rebuild the rows — the exact same shape the JS

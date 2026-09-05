@@ -84,12 +84,15 @@
           {% for quest in questline.quests.all %}
             <div class="qgroup public-map-quest"
                  data-quest-id="{{ quest.pk }}"
+                 data-preview="{{ quest.preview_json }}"
+                 data-quest-index="{{ forloop.counter }}"
+                 data-quest-total="{{ questline.quests.count }}"
                  style="left:{{ quest.coord_x }}px;
                         top:{{ quest.coord_y }}px"
                  data-prerequisites="{% for prerequisite in quest.prerequisite_quests.all %}{{ prerequisite.pk }}{% if not forloop.last %},{% endif %}{% endfor %}">
               <a class="qcard qcard-draft{% if quest.is_optional %} qcard-optional{% endif %}"
                  draggable="false"
-                 href="#preview-{{ quest.pk }}">
+                 href="#quest-preview">
                 {% if quest.is_optional %}<div class="optional-flag">OPTIONAL PATH</div>{% endif %}
                 <div class="crumb">
                   {% if quest.is_optional %}
@@ -113,7 +116,5 @@
       </div>
     </section>
   </main>
-  {% for quest in questline.quests.all %}
-    {% include "questlines/_quest-preview.html" with index=forloop.counter total=questline.quests.count %}
-  {% endfor %}
+  {% include "questlines/_quest-preview.html" %}
 {% endblock %}

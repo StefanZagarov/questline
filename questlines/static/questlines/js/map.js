@@ -68,11 +68,100 @@ function growCanvasForQuest(top, questHeight) {
   canvas.style.height = `${canvas.clientHeight + growthSteps * GROW_AMOUNT}px`;
 }
 
-function viewQuest(questId) {
-  const drawer = document.getElementById(`preview-${questId}`);
-  const group = document.querySelector(`[data-quest-id="${questId}"]`);
+const previewDialog = document.getElementById("quest-preview");
+let previewedGroup = null;
+
+function setTextWithLineBreaks(element, value) {
+  element.replaceChildren();
+
+  value.split(/\r?\n/).forEach((line, index) => {
+    if (index > 0) element.appendChild(document.createElement("br"));
+    element.appendChild(document.createTextNode(line));
+  });
+}
+
+function populatePreview(group) {
+  const preview = JSON.parse(group.dataset.preview);
+  const isOptional = preview.is_optional;
+
+  previewDialog.querySelector("[data-preview-crumb]").textContent = isOptional
+    ? "SIDE QUEST"
+    : `QUEST ${group.dataset.questIndex} OF ${group.dataset.questTotal}`;
+  previewDialog.querySelector("[data-preview-optional]").hidden = !isOptional;
+  previewDialog.querySelector("[data-preview-title]").textContent = preview.title;
+
+  const body = previewDialog.querySelector("[data-preview-body]");
+  body.hidden = !preview.description;
+  setTextWithLineBreaks(body, preview.description);
+
+  const prerequisiteLine = previewDialog.querySelector(
+    "[data-preview-prerequisite-line]",
+  );
+  const prerequisites = previewDialog.querySelector(
+    "[data-preview-prerequisites]",
+  );
+  prerequisites.replaceChildren();
+  prerequisiteLine.hidden = preview.prerequisites.length === 0;
+
+  preview.prerequisites.forEach((title, index) => {
+    const prerequisite = document.createElement("strong");
+    prerequisite.textContent = title;
+    prerequisites.appendChild(prerequisite);
+    if (index < preview.prerequisites.length - 1) {
+      prerequisites.appendChild(document.createTextNode(", "));
+    }
+  });
+
+  const objectiveCount = preview.objectives.length;
+  previewDialog.querySelector("[data-preview-objective-count]").textContent =
+    `${objectiveCount} TRIAL${objectiveCount === 1 ? "" : "S"}`;
+
+  const objectiveList = previewDialog.querySelector("[data-preview-objectives]");
+  const emptyState = previewDialog.querySelector("[data-preview-empty]");
+  objectiveList.replaceChildren();
+  objectiveList.hidden = objectiveCount === 0;
+  emptyState.hidden = objectiveCount !== 0;
+
+  preview.objectives.forEach((objective) => {
+    const template = previewDialog.querySelector(
+      `[data-preview-objective-template="${objective.type}"]`,
+    );
+    if (!template) return;
+
+    const row = template.content.cloneNode(true);
+    row.querySelector("[data-preview-objective-title]").textContent =
+      objective.title;
+
+    const detail = row.querySelector("[data-preview-objective-detail]");
+    detail.hidden = !objective.description;
+    if (objective.description) {
+      setTextWithLineBreaks(
+        row.querySelector("[data-preview-objective-description]"),
+        objective.description,
+      );
+    }
+
+    if (objective.type === "sliderobjective") {
+      row.querySelector("[data-preview-objective-range]").textContent =
+        `${objective.min_value} – ${objective.goal_value}`;
+      row.querySelector("[data-preview-objective-goal]").textContent =
+        objective.goal_value;
+
+      const slider = row.querySelector("[data-preview-slider]");
+      slider.min = objective.min_value;
+      slider.max = objective.goal_value;
+      slider.value = objective.min_value;
+    }
+
+    objectiveList.appendChild(row);
+  });
+}
+
+function viewQuest(group) {
+  populatePreview(group);
   group.classList.add("is-previewing");
-  drawer.showModal();
+  previewedGroup = group;
+  previewDialog.showModal();
 }
 
 // The point on `box`'s edge that faces `other`, plus which way that edge faces.
@@ -227,7 +316,7 @@ document.querySelectorAll(".qgroup[data-move-url]").forEach((group) => {
     moved.classList.remove("is-dragging");
 
     if (!wasDrag) {
-      viewQuest(moved.dataset.questId);
+      viewQuest(moved);
       return;
     }
 
@@ -271,28 +360,25 @@ document.querySelectorAll(".qgroup[data-move-url]").forEach((group) => {
 document.querySelectorAll(".qgroup:not([data-move-url])").forEach((group) => {
   group.addEventListener("click", (e) => {
     e.preventDefault();
-    viewQuest(group.dataset.questId);
+    viewQuest(group);
   });
 });
 
-document.querySelectorAll(".quest-preview").forEach((dialog) => {
-  // ✕ button — <a href="#">, so stop the fragment nav, then close.
-  dialog.querySelector(".preview-close").addEventListener("click", (e) => {
-    e.preventDefault();
-    dialog.close();
-  });
+// ✕ button — <a href="#">, so stop the fragment nav, then close.
+previewDialog.querySelector(".preview-close").addEventListener("click", (e) => {
+  e.preventDefault();
+  previewDialog.close();
+});
 
-  // Backdrop click: showModal() reports a ::backdrop hit as target === the dialog
-  // itself; a click on .preview-panel targets a child, so this only fires outside.
-  dialog.addEventListener("click", (e) => {
-    if (e.target === dialog) dialog.close();
-  });
+// Backdrop click: showModal() reports a ::backdrop hit as target === the dialog
+// itself; a click on .preview-panel targets a child, so this only fires outside.
+previewDialog.addEventListener("click", (e) => {
+  if (e.target === previewDialog) previewDialog.close();
+});
 
-  dialog.addEventListener("close", () => {
-    const questId = dialog.id.replace("preview-", "");
-    const group = document.querySelector(`[data-quest-id="${questId}"]`);
-    group.classList.remove("is-previewing");
-  });
+previewDialog.addEventListener("close", () => {
+  previewedGroup?.classList.remove("is-previewing");
+  previewedGroup = null;
 });
 
 fitCanvasToQuests();

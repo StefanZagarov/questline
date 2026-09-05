@@ -96,7 +96,16 @@
           {% for quest_id, quest_state in progress.quests.items %}
             <article class="qgroup adventure-quest{% if quest_id in progress.invalid_quests %} is-invalid{% endif %}"
                      data-quest-id="{{ quest_id }}"
+                     data-quest-index="{{ quest_state.main_index }}"
+                     data-quest-total="{{ progress.quests_summary.main_total }}"
+                     data-quest-title="{{ quest_state.quest.title }}"
+                     data-quest-description="{{ quest_state.quest.description }}"
+                     data-quest-is-optional="{{ quest_state.quest.is_optional|yesno:'true,false' }}"
+                     data-quest-is-unlocked="{{ quest_state.is_unlocked|yesno:'true,false' }}"
+                     data-quest-effective-complete="{{ quest_state.effective_complete|yesno:'true,false' }}"
+                     data-quest-is-invalid="{% if quest_id in progress.invalid_quests %}true{% else %}false{% endif %}"
                      data-prerequisites="{% for prerequisite in quest_state.quest.prerequisite_quests.all %}{{ prerequisite.pk }}{% if not forloop.last %},{% endif %}{% endfor %}"
+                     data-prerequisites-titles="{{ quest_state.prerequisite_titles_json }}"
                      style="left: {{ quest_state.quest.coord_x }}px;
                             top: {{ quest_state.quest.coord_y }}px;
                             z-index: {{ forloop.counter }}">
@@ -167,5 +176,5 @@
       </div>
     </section>
   </main>
-  {% include '_adventure-drawer.html' %}
+  {% include 'progress/_adventure-drawer.html' %}
 {% endblock %}

@@ -1,76 +1,23 @@
-<dialog class="quest-preview" id="preview-{{ quest.pk }}">
+<dialog class="quest-preview" id="adventure-drawer">
   <aside class="preview-panel">
     <div class="preview-top">
-      <span class="preview-crumb">
-        {% if quest.is_optional %}
-          SIDE QUEST
-        {% else %}
-          QUEST {{ index }} OF {{ total }}
-        {% endif %}
-      </span>
-      {% if quest.is_optional %}<span class="optional-badge">╌ OPTIONAL</span>{% endif %}
+      <span data-adventure-crumb></span>
+      <span class="optional-badge" data-adventure-optional hidden>╌ OPTIONAL</span>
       <a class="preview-close" href="#" aria-label="Close">✕</a>
     </div>
-    <h2 class="preview-title">{{ quest.title }}</h2>
-    {% if quest.description %}<p class="preview-body">{{ quest.description|linebreaksbr }}</p>{% endif %}
-    {% if quest.prerequisite_quests.all %}
-      <div class="prereq-line">
-        ⛓ Requires:
-        {% for prerequisite in quest.prerequisite_quests.all %}
-          <strong>{{ prerequisite.title }}</strong>
-          {% if not forloop.last %},{% endif %}
-        {% endfor %}
-      </div>
-    {% endif %}
+    <h2 class="preview-title" data-quest-title></h2>
+    <p class="preview-body" data-quest-description hidden></p>
+    <div class="prereq-line" data-prerequisite-line hidden>
+      ⛓ Requires:
+      <span data-prerequisites-titles></span>
+    </div>
     <div class="obj-heading">
       <h3>✦ OBJECTIVES</h3>
-      <span class="obj-count">{{ quest.objectives.count }} TRIAL{{ quest.objectives.count|pluralize }}</span>
+      <span class="obj-count" data-objectives-count></span>
     </div>
-    {% if quest.objectives.all %}
-      <div class="obj-list">
-        {% for objective in quest.objectives_preview %}
-          {% if objective.type == "sliderobjective" %}
-            <div class="obj-item obj-slider">
-              <div class="row">
-                <span class="obj-label">{{ objective.title }}</span>
-                <span class="val">{{ objective.min_value }} – {{ objective.goal_value }}</span>
-                <span class="obj-kind">◄► METER</span>
-              </div>
-              {% if objective.description %}
-                <details class="obj-detail">
-                  <summary>DETAIL</summary>
-                  <p>{{ objective.description|linebreaksbr }}</p>
-                </details>
-              {% endif %}
-              <input type="range"
-                     class="ql-slider"
-                     min="{{ objective.min_value }}"
-                     max="{{ objective.goal_value }}"
-                     value="{{ objective.min_value }}"
-                     disabled>
-              <div class="goal-hint">
-                goal: <strong>{{ objective.goal_value }}</strong>
-              </div>
-            </div>
-          {% else %}
-            <div class="obj-item obj-check">
-              <div class="row">
-                <span class="box"></span>
-                <span class="obj-label">{{ objective.title }}</span>
-                <span class="obj-kind">▣ TASK</span>
-              </div>
-              {% if objective.description %}
-                <details class="obj-detail">
-                  <summary>DETAIL</summary>
-                  <p>{{ objective.description|linebreaksbr }}</p>
-                </details>
-              {% endif %}
-            </div>
-          {% endif %}
-        {% endfor %}
-      </div>
-    {% else %}
-      <p class="obj-empty">No trials set — this quest is a milestone to reach, not a task to grind.</p>
-    {% endif %}
+    <div class="obj-list" data-quest-objectives></div>
+    <p class="obj-empty" data-empty-quest hidden>
+      No trials set — this quest is illegal by the guild's Book of Questcrafting.
+    </p>
   </aside>
 </dialog>

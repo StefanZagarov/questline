@@ -76,6 +76,9 @@
                style="left:{{ quest.coord_x }}px;
                       top:{{ quest.coord_y }}px"
                data-move-url="{% url 'quest-move' quest.pk %}"
+               data-preview="{{ quest.preview_json }}"
+               data-quest-index="{{ forloop.counter }}"
+               data-quest-total="{{ questline.quests.count }}"
                data-prerequisites="{% for prerequisite in quest.prerequisite_quests.all %}{{ prerequisite.pk }}{% if not forloop.last %},{% endif %}{% endfor %}">
             {% comment %}
               Revealed on hover of the qgroup. Each button carries its own URL and
@@ -107,7 +110,7 @@
             {% endcomment %}
             <a class="qcard qcard-draft{% if quest.is_optional %} qcard-optional{% endif %}"
                draggable="false"
-               href="#preview-{{ quest.pk }}">
+               href="#quest-preview">
               {% if quest.is_optional %}<div class="optional-flag">OPTIONAL PATH</div>{% endif %}
               <div class="crumb">
                 {% if quest.is_optional %}
@@ -133,12 +136,5 @@
   </main>
   {# renders inline, with this page's context — a text split, not a routing one #}
   {% include 'questlines/_quest-drawer.html' %}
-  {% comment %}
-    One read-only preview panel per quest, pre-rendered and toggled by CSS :target
-    (the card links to #preview-<pk>). Kept OUTSIDE <main> so each panel's
-    position:fixed anchors to the viewport, not to a positioned ancestor.
-  {% endcomment %}
-  {% for quest in questline.quests.all %}
-    {% include 'questlines/_quest-preview.html' with quest=quest index=forloop.counter total=questline.quests.count %}
-  {% endfor %}
+  {% include 'questlines/_quest-preview.html' %}
 {% endblock %}
