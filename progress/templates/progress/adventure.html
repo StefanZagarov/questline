@@ -106,6 +106,8 @@
                      data-quest-is-invalid="{% if quest_id in progress.invalid_quests %}true{% else %}false{% endif %}"
                      data-prerequisites="{% for prerequisite in quest_state.quest.prerequisite_quests.all %}{{ prerequisite.pk }}{% if not forloop.last %},{% endif %}{% endfor %}"
                      data-prerequisites-titles="{{ quest_state.prerequisite_titles_json }}"
+                     data-quest-objectives="{{ quest_state.objectives_json }}"
+                     data-adventure-note-content="{{ quest_state.adventure_note_content }}"
                      style="left: {{ quest_state.quest.coord_x }}px;
                             top: {{ quest_state.quest.coord_y }}px;
                             z-index: {{ forloop.counter }}">
@@ -114,7 +116,7 @@
                 <a class="qcard {% if quest_state.effective_complete %} qcard-done {% elif quest_state.is_unlocked %} qcard-open glow {% else %} qcard-locked {% endif %} {% if quest_state.quest.is_optional %}qcard-optional{% endif %}"
                    href="#">
                   {% if quest_state.quest.is_optional %}<span class="optional-flag">OPTIONAL PATH</span>{% endif %}
-                  <span class="crumb">QUEST {{ forloop.counter }}</span>
+                  <span class="crumb">QUEST {{ quest_state.main_index }}</span>
                   <span class="qtitle">{{ quest_state.quest.title }}</span>
                 </a>
                 <button class="quest-objective-toggle"

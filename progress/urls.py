@@ -9,4 +9,9 @@ urlpatterns = [
         views.StartAdventureView.as_view(),
         name="start-adventure",
     ),
+    path(
+        "<int:enrollment_pk>/<int:objective_pk>/update",
+        views.UpdateObjectiveProgressView.as_view(),
+        name="update-objective-progress",
+    ),
 ]

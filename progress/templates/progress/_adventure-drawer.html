@@ -19,5 +19,21 @@
     <p class="obj-empty" data-empty-quest hidden>
       No trials set — this quest is illegal by the guild's Book of Questcrafting.
     </p>
+    <div class="log">
+      <h3><label for="adventure-note">✦ ADVENTURER'S LOG</label></h3>
+      <div class="log-hint" id="adventure-note-hint">
+        Your private reflections. The author never sees these — the map is theirs, the journey is yours.
+      </div>
+      <textarea id="adventure-note"
+                rows="4"
+                maxlength="99999"
+                data-adventure-note
+                aria-describedby="adventure-note-hint adventure-note-status"
+                placeholder="Useful conclusions from this stretch of the map…"></textarea>
+      <p id="adventure-note-status"
+         data-adventure-note-status
+         role="status"
+         aria-live="polite"></p>
+    </div>
   </aside>
 </dialog>
