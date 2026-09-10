@@ -4,11 +4,12 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 from django.http.response import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views import generic as views
 
-from progress.models import Enrollment, ObjectiveProgress
+from progress.models import AdventureNote, Enrollment, ObjectiveProgress
 from progress.services import get_questline_progress
-from questlines.models import Objective, Questline
+from questlines.models import Objective, Quest, Questline
 
 
 class AdventureView(LoginRequiredMixin, views.DetailView):
@@ -31,6 +32,15 @@ class AdventureView(LoginRequiredMixin, views.DetailView):
         # Keeping count of every main quest for the "Quest X of Y" label
         main_index = 1
         for quest_state in context["progress"]["quests"].values():
+            # Add the update url to each quest so JS knows what endpoint to use to send the new Adventure Note data to the BE
+            quest_state["update_url"] = reverse(
+                "update-adventure-note",
+                kwargs={
+                    "enrollment_pk": self.object.id,
+                    "quest_pk": quest_state["quest"].id,
+                },
+            )
+
             if not quest_state["quest"].is_optional:
                 quest_state["main_index"] = main_index
                 main_index += 1
@@ -41,6 +51,17 @@ class AdventureView(LoginRequiredMixin, views.DetailView):
                     for prerequisite in quest_state["quest"].prerequisite_quests.all()
                 ]
             )
+
+            # Add the update url to each objective so JS knows what endpoint to use to send the new objective data to the BE
+            for objective_id, objective_state in quest_state["objectives"].items():
+                objective_state["update_url"] = reverse(
+                    "update-objective-progress",
+                    kwargs={
+                        "enrollment_pk": self.object.id,
+                        "objective_pk": objective_id,
+                    },
+                )
+
             # Objectives for each quest, the data is made into JSON format for transportation to the JS script
             quest_state["objectives_json"] = json.dumps(quest_state["objectives"])
 
@@ -108,6 +129,7 @@ class UpdateObjectiveProgressView(LoginRequiredMixin, views.View):
             pk=enrollment_pk,  # Match the Enrollment ID from the URL.
             enrolled_user=request.user,  # Make sure the Enrollment belongs to this user.
         )
+
         # 2. Get the Objective only if it belongs to this Enrollment's Questline.
         objective = get_object_or_404(
             Objective,
@@ -115,6 +137,19 @@ class UpdateObjectiveProgressView(LoginRequiredMixin, views.View):
             # Objective -> its Quest -> the same Questline as the Enrollment.
             quest__questline=enrollment.questline,
         )
+
+        # Check the quest's state before saving, we need to verify no curl has altered the state before we try to save it
+        enrollment_state = get_questline_progress(enrollment)
+        quest_is_unlocked = enrollment_state["quests"][objective.quest_id][
+            "is_unlocked"
+        ]
+
+        if not quest_is_unlocked:
+            return JsonResponse(
+                {"error": "Quest is not unlocked, cannot update objective value"},
+                status=400,
+            )
+
         # 3. The unique Enrollment + Objective pair identifies the user's progress row.
         objective_progress = get_object_or_404(
             ObjectiveProgress,
@@ -133,7 +168,6 @@ class UpdateObjectiveProgressView(LoginRequiredMixin, views.View):
 
             objective_progress.is_complete = is_complete
             objective_progress.save()
-            return JsonResponse({"success": True}, status=200)
         elif objective.objective_type == "sliderobjective":
             slider_objective = objective.sliderobjective
             current_value_string = request.POST.get("current_value")
@@ -159,4 +193,67 @@ class UpdateObjectiveProgressView(LoginRequiredMixin, views.View):
                 objective_progress.is_complete = False
 
             objective_progress.save()
+        else:
+            return JsonResponse({"error": "Unsupported objective type."}, status=400)
+
+        # Send the recalculated, JSON-safe UI state to JavaScript.
+        updated_state = get_questline_progress(enrollment)
+        changed_objective = updated_state["quests"][objective.quest_id]["objectives"][
+            objective.id
+        ]
+        updated_state_json = {
+            "success": True,
+            "changed_objective": {
+                "id": objective.id,
+                "quest_id": objective.quest_id,
+                "is_complete": changed_objective["is_complete"],
+                "current_value": changed_objective["current_value"],
+                "objective_progress": changed_objective["objective_progress"],
+            },
+            "quests": {
+                quest_id: {
+                    "is_unlocked": quest_state["is_unlocked"],
+                    "effective_complete": quest_state["effective_complete"],
+                    "objectives_summary": quest_state["objectives_summary"],
+                }
+                for quest_id, quest_state in updated_state["quests"].items()
+            },
+            "quests_summary": updated_state["quests_summary"],
+            "main_questline_progress_ratio": updated_state[
+                "main_questline_progress_ratio"
+            ],
+            "optional_questline_progress_ratio": updated_state[
+                "optional_questline_progress_ratio"
+            ],
+            "invalid_quests": sorted(updated_state["invalid_quests"]),
+        }
+        return JsonResponse(updated_state_json, status=200)
+
+
+class UpdateAdventureNoteView(LoginRequiredMixin, views.View):
+    model = AdventureNote
+
+    def post(self, request, enrollment_pk, quest_pk):
+        enrollment = get_object_or_404(
+            Enrollment,
+            pk=enrollment_pk,
+            enrolled_user=request.user,
+        )
+        quest = get_object_or_404(Quest, pk=quest_pk, questline=enrollment.questline)
+
+        data = json.loads(request.body)
+        content_data = data["content"]
+
+        if content_data == "":
+            self.model.objects.filter(enrollment=enrollment, quest=quest).delete()
             return JsonResponse({"success": True}, status=200)
+
+        note, created = self.model.objects.update_or_create(
+            enrollment=enrollment,
+            quest=quest,
+            defaults={
+                "content": content_data
+            },  # defaults is the value setting argument
+        )
+
+        return JsonResponse({"success": True}, status=200)
