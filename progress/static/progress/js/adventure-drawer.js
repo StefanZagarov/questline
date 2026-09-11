@@ -85,6 +85,7 @@ quests.forEach((quest) => {
       if (objective.type === "checklistobjective") {
         let confirmedChecked = objective.is_complete;
         input.checked = confirmedChecked;
+
         input.addEventListener("change", async (event) => {
           errorMessage.hidden = true;
           errorMessage.textContent = "";
@@ -127,6 +128,7 @@ quests.forEach((quest) => {
         });
       } else if (objective.type === "sliderobjective") {
         let confirmedValue = objective.current_value;
+        let sliderSaveTimer;
         input.min = objective.min_value;
         input.max = objective.goal_value;
         input.value = confirmedValue;
@@ -135,6 +137,46 @@ quests.forEach((quest) => {
           "[data-objective-current]",
         );
         currentValue.textContent = confirmedValue;
+
+        const minusButton = objectiveRow.querySelector(
+          "[data-objective-step='-1']",
+        );
+        minusButton.addEventListener("click", () => {
+          const currentValueInt = Number(currentValue.textContent);
+          if (currentValueInt === objective.min_value) return;
+
+          const step = Number(minusButton.dataset.objectiveStep);
+          const nextValue = currentValueInt + step;
+          input.value = nextValue;
+          currentValue.textContent = nextValue;
+
+          window.clearTimeout(sliderSaveTimer);
+          sliderSaveTimer = window.setTimeout(() => {
+            input.dispatchEvent(new Event("change"));
+          }, 500);
+        });
+
+        const plusButton = objectiveRow.querySelector(
+          "[data-objective-step='1']",
+        );
+        plusButton.addEventListener("click", () => {
+          const currentValueInt = Number(currentValue.textContent);
+          if (currentValueInt === objective.goal_value) return;
+
+          const step = Number(plusButton.dataset.objectiveStep);
+          const nextValue = currentValueInt + step;
+          input.value = nextValue;
+          currentValue.textContent = nextValue;
+
+          window.clearTimeout(sliderSaveTimer);
+          sliderSaveTimer = window.setTimeout(() => {
+            input.dispatchEvent(new Event("change"));
+          }, 500);
+        });
+
+        input.addEventListener("input", (event) => {
+          currentValue.textContent = event.currentTarget.value;
+        });
 
         input.addEventListener("change", async (event) => {
           errorMessage.hidden = true;
@@ -193,7 +235,6 @@ quests.forEach((quest) => {
       }
 
       input.setAttribute("aria-label", objective.title);
-      // TODO (Stage 2): Send Checklist/Slider changes to objective.update_url and apply the authoritative response.
       objectivesContainer.appendChild(objectiveRow);
     });
 
