@@ -66,7 +66,8 @@ document.querySelectorAll(".quest-objective-toggle").forEach((button) => {
 
   if (!quickView) return;
 
-  button.addEventListener("click", () => {
+  button.addEventListener("click", (event) => {
+    event.stopPropagation();
     const isOpen = button.getAttribute("aria-expanded") !== "true";
 
     button.setAttribute("aria-expanded", String(isOpen));

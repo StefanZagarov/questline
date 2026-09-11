@@ -961,6 +961,7 @@
   margin-left: auto;
   width: 32px;
   height: 32px;
+  padding: 0;
   border: 3px solid var(--ink);
   background: var(--card-2);
   display: flex;
@@ -970,6 +971,7 @@
   font-size: 15px;
   color: var(--ink);
   text-decoration: none;
+  cursor: pointer;
   box-shadow: 3px 3px 0 rgba(58, 44, 21, 0.3);
 }
 .preview-close:hover {

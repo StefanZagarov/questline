@@ -3,11 +3,11 @@
     <div class="preview-top">
       <span data-adventure-crumb></span>
       <span class="optional-badge" data-adventure-optional hidden>╌ OPTIONAL</span>
-      <a class="preview-close" href="#" aria-label="Close">✕</a>
+      <button class="preview-close" type="button" aria-label="Close">✕</button>
     </div>
     <h2 class="preview-title" data-quest-title></h2>
     <p class="preview-body" data-quest-description hidden></p>
-    <div class="prereq-line" data-prerequisite-line hidden>
+    <div class="prereq-line" data-prerequisites-line hidden>
       ⛓ Requires:
       <span data-prerequisites-titles></span>
     </div>
@@ -19,8 +19,57 @@
     <p class="obj-empty" data-empty-quest hidden>
       No trials set — this quest is illegal by the guild's Book of Questcrafting.
     </p>
+    <template data-objective-template="checklistobjective">
+      <div class="obj-item obj-check" data-objective-row>
+        <label class="row">
+          <input type="checkbox" data-objective-input>
+          <span class="box" aria-hidden="true"></span>
+          <span class="obj-label" data-objective-title></span>
+          <span class="obj-kind">▣ TASK</span>
+        </label>
+        <details class="obj-detail" data-objective-detail hidden>
+          <summary>DETAIL</summary>
+          <p data-objective-description></p>
+        </details>
+        <p class="objective-error" data-objective-error role="alert" hidden></p>
+      </div>
+    </template>
+    <template data-objective-template="sliderobjective">
+      <div class="obj-item obj-slider" data-objective-row>
+        <div class="row">
+          <span class="obj-label" data-objective-title></span>
+          <span class="val">
+            <span data-objective-current></span>
+            /
+            <span data-objective-goal></span>
+          </span>
+          <span class="obj-kind">◄► METER</span>
+        </div>
+        <details class="obj-detail" data-objective-detail hidden>
+          <summary>DETAIL</summary>
+          <p data-objective-description></p>
+        </details>
+        <div class="objective-slider-controls">
+          <button class="objective-step"
+                  type="button"
+                  data-objective-step="-1"
+                  aria-label="Decrease slider value">−</button>
+          <input class="ql-slider" type="range" data-objective-input>
+          <button class="objective-step"
+                  type="button"
+                  data-objective-step="1"
+                  aria-label="Increase slider value">+</button>
+        </div>
+        <div class="goal-hint">
+          goal: <strong data-objective-goal-hint></strong>
+        </div>
+        <p class="objective-error" data-objective-error role="alert" hidden></p>
+      </div>
+    </template>
     <div class="log">
-      <h3><label for="adventure-note">✦ ADVENTURER'S LOG</label></h3>
+      <h3>
+        <label for="adventure-note">✦ ADVENTURER'S LOG</label>
+      </h3>
       <div class="log-hint" id="adventure-note-hint">
         Your private reflections. The author never sees these — the map is theirs, the journey is yours.
       </div>
