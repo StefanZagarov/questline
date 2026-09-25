@@ -6,11 +6,32 @@ const adventureNoteStatus = drawer.querySelector(
 );
 
 let selectedAdventureNoteUpdateUrl = "";
+// Read and store in the adventure note field dataset
 let confirmedAdventureNoteContent = "";
 let adventureNoteSaveTimer;
+// Specifically for adventure notes value update in the dom
+let openedQuest;
+let noteIsSaving;
 
 quests.forEach((quest) => {
   quest.addEventListener("click", (event) => {
+    // Reopening the same quest while its note save hasn't been confirmed yet (timer waiting or reply not back), so the dataset still holds the older note
+    const reopenedWithUnsavedNote =
+      openedQuest === quest &&
+      adventureNoteField.value !== confirmedAdventureNoteContent;
+
+    // flushing: when a debounced action is pending, you run it right away instead of dropping it
+    if (noteIsSaving) {
+      saveAdventureNote(
+        openedQuest,
+        adventureNoteField.value,
+        adventureNoteField,
+        adventureNoteStatus,
+        selectedAdventureNoteUpdateUrl,
+      );
+    }
+
+    openedQuest = quest;
     const clickedItem = event.currentTarget;
     const data = clickedItem.dataset;
 
@@ -63,7 +84,8 @@ quests.forEach((quest) => {
     objectivesContainer.hidden = objectiveValues.length === 0;
     emptyObjectivesMessage.hidden = objectiveValues.length !== 0;
 
-    objectiveValues.forEach((objective) => {
+    const objectiveEntries = Object.entries(objectives);
+    objectiveEntries.forEach(([objectiveId, objective]) => {
       const template = drawer.querySelector(
         `[data-objective-template="${objective.type}"]`,
       );
@@ -82,6 +104,9 @@ quests.forEach((quest) => {
       const errorMessage = objectiveRow.querySelector("[data-objective-error]");
       input.disabled = controlsDisabled;
 
+      const objectiveItem = objectiveRow.querySelector("[data-objective-row]");
+      if (objective.is_complete) objectiveItem.classList.add("is-complete");
+
       if (objective.type === "checklistobjective") {
         let confirmedChecked = objective.is_complete;
         input.checked = confirmedChecked;
@@ -89,6 +114,16 @@ quests.forEach((quest) => {
         input.addEventListener("change", async (event) => {
           errorMessage.hidden = true;
           errorMessage.textContent = "";
+
+          updateDrawerObjectiveComplete(
+            objectiveItem,
+            event.currentTarget.checked,
+          );
+          updateQuickObjectiveComplete(
+            quest,
+            objectiveId,
+            event.currentTarget.checked,
+          );
 
           const body = new FormData();
           body.append("is_complete", String(event.currentTarget.checked));
@@ -111,6 +146,12 @@ quests.forEach((quest) => {
             // response.ok still handles server-reported HTTP errors.
             if (!response.ok) {
               input.checked = confirmedChecked;
+              updateDrawerObjectiveComplete(objectiveItem, confirmedChecked);
+              updateQuickObjectiveComplete(
+                quest,
+                objectiveId,
+                confirmedChecked,
+              );
               errorMessage.textContent = responseData.error;
               errorMessage.hidden = false;
               return;
@@ -118,9 +159,13 @@ quests.forEach((quest) => {
 
             confirmedChecked = responseData.changed_objective.is_complete;
             input.checked = confirmedChecked;
+            updateDrawerObjectiveComplete(objectiveItem, confirmedChecked);
+            updateMapDOM(responseData);
             // catch handles missing responses, connection failures, and unreadable responses.
           } catch {
             input.checked = confirmedChecked;
+            updateDrawerObjectiveComplete(objectiveItem, confirmedChecked);
+            updateQuickObjectiveComplete(quest, objectiveId, confirmedChecked);
             errorMessage.textContent =
               "Unable to save. Check your connection and try again.";
             errorMessage.hidden = false;
@@ -150,6 +195,18 @@ quests.forEach((quest) => {
           input.value = nextValue;
           currentValue.textContent = nextValue;
 
+          updateQuickObjectiveSlider(
+            quest,
+            objectiveId,
+            currentValue.textContent,
+            objective.min_value,
+            objective.goal_value,
+          );
+          updateDrawerObjectiveComplete(
+            objectiveItem,
+            Number(currentValue.textContent) >= objective.goal_value,
+          );
+
           window.clearTimeout(sliderSaveTimer);
           sliderSaveTimer = window.setTimeout(() => {
             input.dispatchEvent(new Event("change"));
@@ -168,6 +225,18 @@ quests.forEach((quest) => {
           input.value = nextValue;
           currentValue.textContent = nextValue;
 
+          updateQuickObjectiveSlider(
+            quest,
+            objectiveId,
+            currentValue.textContent,
+            objective.min_value,
+            objective.goal_value,
+          );
+          updateDrawerObjectiveComplete(
+            objectiveItem,
+            Number(currentValue.textContent) >= objective.goal_value,
+          );
+
           window.clearTimeout(sliderSaveTimer);
           sliderSaveTimer = window.setTimeout(() => {
             input.dispatchEvent(new Event("change"));
@@ -176,6 +245,18 @@ quests.forEach((quest) => {
 
         input.addEventListener("input", (event) => {
           currentValue.textContent = event.currentTarget.value;
+
+          updateQuickObjectiveSlider(
+            quest,
+            objectiveId,
+            currentValue.textContent,
+            objective.min_value,
+            objective.goal_value,
+          );
+          updateDrawerObjectiveComplete(
+            objectiveItem,
+            Number(currentValue.textContent) >= objective.goal_value,
+          );
         });
 
         input.addEventListener("change", async (event) => {
@@ -206,12 +287,30 @@ quests.forEach((quest) => {
               currentValue.textContent = confirmedValue;
               errorMessage.textContent = responseData.error;
               errorMessage.hidden = false;
+
+              updateQuickObjectiveSlider(
+                quest,
+                objectiveId,
+                confirmedValue,
+                objective.min_value,
+                objective.goal_value,
+              );
+              updateDrawerObjectiveComplete(
+                objectiveItem,
+                Number(confirmedValue) >= objective.goal_value,
+              );
+
               return;
             }
 
             confirmedValue = responseData.changed_objective.current_value;
             input.value = confirmedValue;
             currentValue.textContent = confirmedValue;
+            updateDrawerObjectiveComplete(
+              objectiveItem,
+              responseData.changed_objective.is_complete,
+            );
+            updateMapDOM(responseData);
             // catch handles missing responses, connection failures, and unreadable responses.
           } catch {
             input.value = confirmedValue;
@@ -219,6 +318,18 @@ quests.forEach((quest) => {
             errorMessage.textContent =
               "Unable to save. Check your connection and try again.";
             errorMessage.hidden = false;
+
+            updateQuickObjectiveSlider(
+              quest,
+              objectiveId,
+              confirmedValue,
+              objective.min_value,
+              objective.goal_value,
+            );
+            updateDrawerObjectiveComplete(
+              objectiveItem,
+              Number(confirmedValue) >= objective.goal_value,
+            );
           }
         });
 
@@ -240,9 +351,13 @@ quests.forEach((quest) => {
 
     window.clearTimeout(adventureNoteSaveTimer);
     selectedAdventureNoteUpdateUrl = data.adventureNoteUpdate;
-    confirmedAdventureNoteContent = JSON.parse(data.adventureNoteContent);
-    adventureNoteStatus.textContent = "";
-    adventureNoteField.value = confirmedAdventureNoteContent;
+
+    // Keep the typed note instead of overwriting it with the older dataset copy; the pending save's reply will confirm it or roll it back
+    if (!reopenedWithUnsavedNote) {
+      confirmedAdventureNoteContent = JSON.parse(data.adventureNoteContent);
+      adventureNoteStatus.textContent = "";
+      adventureNoteField.value = confirmedAdventureNoteContent;
+    }
 
     drawer.showModal();
   });
@@ -252,47 +367,71 @@ adventureNoteField.addEventListener("input", () => {
   window.clearTimeout(adventureNoteSaveTimer);
 
   const updateUrl = selectedAdventureNoteUpdateUrl;
+  // Get a snapshot of the quest so if it changes (user clicks on another quest) before it is saved, the logic still saves to the correct quest
+  const currentQuest = openedQuest;
   const pendingContent = adventureNoteField.value;
   if (!updateUrl) return;
 
   adventureNoteStatus.textContent = "Saving...";
-
+  noteIsSaving = true;
   adventureNoteSaveTimer = window.setTimeout(async () => {
-    const csrfToken = document.querySelector(
-      "[name=csrfmiddlewaretoken]",
-    ).value;
-
-    try {
-      const response = await fetch(updateUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": csrfToken,
-        },
-        body: JSON.stringify({ content: pendingContent }),
-      });
-      const responseData = await response.json();
-
-      if (selectedAdventureNoteUpdateUrl !== updateUrl) return;
-
-      if (!response.ok) {
-        adventureNoteField.value = confirmedAdventureNoteContent;
-        adventureNoteStatus.textContent =
-          responseData.error || "Unable to save this note.";
-        return;
-      }
-
-      confirmedAdventureNoteContent = pendingContent;
-      adventureNoteStatus.textContent = "Saved";
-    } catch {
-      if (selectedAdventureNoteUpdateUrl !== updateUrl) return;
-
-      adventureNoteField.value = confirmedAdventureNoteContent;
-      adventureNoteStatus.textContent =
-        "Unable to save. Check your connection and try again.";
-    }
+    saveAdventureNote(
+      currentQuest,
+      pendingContent,
+      adventureNoteField,
+      adventureNoteStatus,
+      updateUrl,
+    );
   }, 500);
 });
+
+async function saveAdventureNote(
+  quest,
+  noteContent,
+  adventureNoteField,
+  adventureNoteStatus,
+  updateUrl,
+) {
+  noteIsSaving = false;
+  const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+
+  try {
+    const response = await fetch(updateUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrfToken,
+      },
+      body: JSON.stringify({ content: noteContent }),
+    });
+    const responseData = await response.json();
+
+    // Save the new input field value to the DOM dataset only if the data is succesfully saved in the database. This allows for the drawer to display the updated value on next opening
+    if (response.ok) {
+      quest.dataset.adventureNoteContent = JSON.stringify(noteContent);
+    }
+
+    if (selectedAdventureNoteUpdateUrl !== updateUrl) {
+      return;
+    }
+
+    if (!response.ok) {
+      adventureNoteField.value = confirmedAdventureNoteContent;
+      adventureNoteStatus.textContent =
+        responseData.error || "Unable to save this note.";
+      return;
+    }
+
+    confirmedAdventureNoteContent = noteContent;
+    adventureNoteStatus.textContent = "Saved";
+  } catch {
+    if (selectedAdventureNoteUpdateUrl !== updateUrl) return;
+
+    adventureNoteField.value = confirmedAdventureNoteContent;
+    adventureNoteStatus.textContent =
+      "Unable to save. Check your connection and try again.";
+  }
+}
 
 drawer.querySelector(".preview-close").addEventListener("click", (event) => {
   drawer.close();
@@ -301,3 +440,155 @@ drawer.querySelector(".preview-close").addEventListener("click", (event) => {
 drawer.addEventListener("click", (event) => {
   if (event.target === drawer) drawer.close();
 });
+
+/*{
+    success: true,
+
+    changed_objective: {
+      id: 12,
+      quest_id: 3,
+      is_complete: true,
+      current_value: null,       // number for a Slider
+      objective_progress: 1       // ratio from 0 to 1
+    }
+
+    quests: {
+      "3": {
+        is_unlocked: true,
+        effective_complete: true,
+        objectives_summary: {
+          objectives_complete: 2,
+          total_objectives: 2
+        }
+      },
+      "4": {
+        is_unlocked: true,
+        effective_complete: false,
+        objectives_summary: {
+          objectives_complete: 0,
+          total_objectives: 3
+        }
+      }
+      // One entry for every Quest; IDs are string keys in JavaScript.
+    },
+
+    quests_summary: {
+      main_total: 5,
+      optional_total: 2,
+      completed_main: 1,
+      completed_optional: 0
+    },
+
+    main_questline_progress_ratio: 0.3,
+    optional_questline_progress_ratio: 0,
+    invalid_quests: []            // Quest IDs
+  } */
+// Objectives
+/*   {
+    "12": {
+      title: "Gather supplies",
+      type: "checklistobjective",
+      description: "Find what you need",
+      is_complete: true,
+      current_value: null,
+      objective_progress: 1,
+      update_url: "/questline/adventure/..."
+    },
+    "13": {
+      title: "Train",
+      type: "sliderobjective",
+      description: "",
+      min_value: 0,
+      goal_value: 10,
+      is_complete: false,
+      current_value: 4,
+      objective_progress: 0.4,
+      update_url: "/questline/adventure/..."
+    }
+  }*/
+function updateMapDOM(jsonResponse) {
+  quests.forEach((quest) => {
+    const questId = quest.dataset.questId;
+    const objectives = JSON.parse(quest.dataset.questObjectives);
+    const objectiveId = jsonResponse.changed_objective.id;
+
+    quest.dataset.questIsUnlocked = jsonResponse.quests[questId].is_unlocked;
+    quest.dataset.questEffectiveComplete =
+      jsonResponse.quests[questId].effective_complete;
+
+    if (Number(questId) === jsonResponse.changed_objective.quest_id) {
+      if (objectives[objectiveId].type === "sliderobjective") {
+        objectives[objectiveId].current_value =
+          jsonResponse.changed_objective.current_value;
+
+        updateQuickObjectiveSlider(
+          quest,
+          objectiveId,
+          jsonResponse.changed_objective.current_value,
+          objectives[objectiveId].min_value,
+          objectives[objectiveId].goal_value,
+        );
+      }
+
+      objectives[objectiveId].is_complete =
+        jsonResponse.changed_objective.is_complete;
+      objectives[objectiveId].objective_progress =
+        jsonResponse.changed_objective.objective_progress;
+
+      quest.dataset.questObjectives = JSON.stringify(objectives);
+
+      const questQuickObjective = quest.querySelector(
+        `.objective-quick-row-${objectiveId}`,
+      );
+      jsonResponse.changed_objective.is_complete
+        ? questQuickObjective.classList.add("is-complete")
+        : questQuickObjective.classList.remove("is-complete");
+    }
+  });
+}
+
+function updateQuickObjectiveSlider(
+  quest,
+  objectiveId,
+  currentValue,
+  minValue,
+  goalValue,
+) {
+  const questQuickObjective = quest.querySelector(
+    `.objective-quick-row-${objectiveId}`,
+  );
+
+  questQuickObjective.querySelector(".objective-quick-value").textContent =
+    currentValue;
+  questQuickObjective.querySelector(".objective-mini-fill").style.width = `${
+    ((currentValue - minValue) / (goalValue - minValue)) * 100
+  }%`;
+  updateQuickObjectiveComplete(
+    quest,
+    objectiveId,
+    Number(currentValue) >= goalValue,
+  );
+}
+
+function updateQuickObjectiveComplete(quest, objectiveId, isComplete) {
+  const questQuickObjective = quest.querySelector(
+    `.objective-quick-row-${objectiveId}`,
+  );
+
+  isComplete
+    ? questQuickObjective.classList.add("is-complete")
+    : questQuickObjective.classList.remove("is-complete");
+}
+
+function updateDrawerObjectiveComplete(objectiveItem, isComplete) {
+  isComplete
+    ? objectiveItem.classList.add("is-complete")
+    : objectiveItem.classList.remove("is-complete");
+
+  const objectiveItems = drawer.querySelectorAll("[data-objective-row]");
+  const completeObjectiveItems = drawer.querySelectorAll(
+    "[data-objective-row].is-complete",
+  );
+  drawer.querySelector("[data-objectives-count]").textContent =
+    `${completeObjectiveItems.length} / ${objectiveItems.length}\u00A0\u00A0DONE`;
+}

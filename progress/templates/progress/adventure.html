@@ -138,26 +138,20 @@
                        aria-label="Quest Objectives"
                        id="quest-objectives-{{ quest_id }}"
                        hidden>
-                <header class="objective-quick-header">
-                  <span>✦ OBJECTIVES</span>
-                  <span class="objective-quick-count">{{ quest_state.objectives_summary.objectives_complete }} / {{ quest_state.objectives_summary.total_objectives }}</span>
-                </header>
                 <div class="objective-quick-list">
                   {% for objective_id, objective_state in quest_state.objectives.items %}
-                    <div class="objective-quick-row{% if objective_state.is_complete %} is-complete{% endif %}">
+                    <div class="objective-quick-row objective-quick-row-{{ objective_id }}{% if objective_state.is_complete %} is-complete{% endif %}">
                       <span class="objective-quick-icon" aria-hidden="true">
-                        {% if objective_state.is_complete %}
-                          ✓
-                        {% elif objective_state.type == "checklistobjective" %}
+                        {% if objective_state.type == "checklistobjective" %}
                           ▣
                         {% elif objective_state.type == "sliderobjective" %}
                           ◄►
                         {% endif %}
                       </span>
                       <span class="objective-quick-title">{{ objective_state.title }}</span>
-                      {% if objective_state.type == "checklistobjective" %}
-                        {% if objective_state.is_complete %}<span class="objective-quick-type" aria-hidden="true">▣</span>{% endif %}
-                      {% elif objective_state.type == "sliderobjective" %}
+                      <!-- Always rendered; .is-complete on the row makes it visible. -->
+                      <span class="objective-quick-tick" aria-hidden="true">✓</span>
+                      {% if objective_state.type == "sliderobjective" %}
                         <span class="objective-quick-value">{{ objective_state.current_value }}</span>
                         {% widthratio objective_state.objective_progress 1 100 as objective_percent %}
                         <span class="objective-mini-track" aria-hidden="true">

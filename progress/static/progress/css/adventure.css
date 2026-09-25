@@ -224,15 +224,6 @@
   transition-delay: 0s;
 }
 
-.objective-quick-header {
-  display: none;
-}
-
-.objective-quick-count {
-  color: var(--gold-deep);
-  white-space: nowrap;
-}
-
 .objective-quick-list {
   display: flex;
   flex-direction: column;
@@ -250,7 +241,7 @@
   width: fit-content;
   min-height: 33px;
   display: grid;
-  grid-template-columns: 18px minmax(0, 1fr) auto;
+  grid-template-columns: 18px minmax(0, 1fr) auto 12px;
   align-items: center;
   gap: 7px;
   max-width: 225px;
@@ -277,7 +268,7 @@
 }
 
 .objective-quick-icon,
-.objective-quick-type,
+.objective-quick-tick,
 .objective-quick-value {
   font-family: "Pixelify Sans", sans-serif;
 }
@@ -287,8 +278,18 @@
   text-align: center;
 }
 
-.objective-quick-row.is-complete .objective-quick-icon {
+/* Pinned to the last column of the first line so a Slider's track row cannot push it down.
+   Its slot is always reserved, so completing an Objective shifts nothing. */
+.objective-quick-tick {
+  grid-column: 4;
+  grid-row: 1;
   color: var(--green);
+  text-align: center;
+  visibility: hidden;
+}
+
+.objective-quick-row.is-complete .objective-quick-tick {
+  visibility: visible;
 }
 
 .objective-quick-title {
@@ -303,7 +304,6 @@
   text-decoration: line-through;
 }
 
-.objective-quick-type,
 .objective-quick-value {
   font-size: 11px;
   color: var(--muted);
@@ -389,6 +389,12 @@
 
 #adventure-drawer .obj-check input:checked ~ .obj-label {
   color: var(--muted);
+}
+
+/* Completed Objective row in the drawer; same green as a completed quick-view row. */
+#adventure-drawer .obj-item.is-complete {
+  background: #e4ebd6;
+  border-color: #b8c79e;
 }
 
 #adventure-drawer .obj-check input:focus-visible + .box {
