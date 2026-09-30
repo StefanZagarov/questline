@@ -1,3 +1,8 @@
+import {
+  updateConfirmedQuestCards,
+  updateOptimisticQuestCards,
+} from "./adventure.js";
+
 const quests = document.querySelectorAll(".adventure-quest");
 const drawer = document.getElementById("adventure-drawer");
 const adventureNoteField = drawer.querySelector("[data-adventure-note]");
@@ -124,6 +129,7 @@ quests.forEach((quest) => {
             objectiveId,
             event.currentTarget.checked,
           );
+          updateOptimisticQuestCards(quest);
 
           const body = new FormData();
           body.append("is_complete", String(event.currentTarget.checked));
@@ -152,6 +158,7 @@ quests.forEach((quest) => {
                 objectiveId,
                 confirmedChecked,
               );
+              updateOptimisticQuestCards(quest);
               errorMessage.textContent = responseData.error;
               errorMessage.hidden = false;
               return;
@@ -160,12 +167,13 @@ quests.forEach((quest) => {
             confirmedChecked = responseData.changed_objective.is_complete;
             input.checked = confirmedChecked;
             updateDrawerObjectiveComplete(objectiveItem, confirmedChecked);
-            updateMapDOM(responseData);
+            updateConfirmedMap(responseData);
             // catch handles missing responses, connection failures, and unreadable responses.
           } catch {
             input.checked = confirmedChecked;
             updateDrawerObjectiveComplete(objectiveItem, confirmedChecked);
             updateQuickObjectiveComplete(quest, objectiveId, confirmedChecked);
+            updateOptimisticQuestCards(quest);
             errorMessage.textContent =
               "Unable to save. Check your connection and try again.";
             errorMessage.hidden = false;
@@ -206,6 +214,7 @@ quests.forEach((quest) => {
             objectiveItem,
             Number(currentValue.textContent) >= objective.goal_value,
           );
+          updateOptimisticQuestCards(quest);
 
           window.clearTimeout(sliderSaveTimer);
           sliderSaveTimer = window.setTimeout(() => {
@@ -236,6 +245,7 @@ quests.forEach((quest) => {
             objectiveItem,
             Number(currentValue.textContent) >= objective.goal_value,
           );
+          updateOptimisticQuestCards(quest);
 
           window.clearTimeout(sliderSaveTimer);
           sliderSaveTimer = window.setTimeout(() => {
@@ -257,6 +267,7 @@ quests.forEach((quest) => {
             objectiveItem,
             Number(currentValue.textContent) >= objective.goal_value,
           );
+          updateOptimisticQuestCards(quest);
         });
 
         input.addEventListener("change", async (event) => {
@@ -299,6 +310,7 @@ quests.forEach((quest) => {
                 objectiveItem,
                 Number(confirmedValue) >= objective.goal_value,
               );
+              updateOptimisticQuestCards(quest);
 
               return;
             }
@@ -310,7 +322,7 @@ quests.forEach((quest) => {
               objectiveItem,
               responseData.changed_objective.is_complete,
             );
-            updateMapDOM(responseData);
+            updateConfirmedMap(responseData);
             // catch handles missing responses, connection failures, and unreadable responses.
           } catch {
             input.value = confirmedValue;
@@ -330,6 +342,7 @@ quests.forEach((quest) => {
               objectiveItem,
               Number(confirmedValue) >= objective.goal_value,
             );
+            updateOptimisticQuestCards(quest);
           }
         });
 
@@ -506,7 +519,7 @@ drawer.addEventListener("click", (event) => {
       update_url: "/questline/adventure/..."
     }
   }*/
-function updateMapDOM(jsonResponse) {
+function updateConfirmedMap(jsonResponse) {
   quests.forEach((quest) => {
     const questId = quest.dataset.questId;
     const objectives = JSON.parse(quest.dataset.questObjectives);
@@ -545,6 +558,7 @@ function updateMapDOM(jsonResponse) {
         : questQuickObjective.classList.remove("is-complete");
     }
   });
+  updateConfirmedQuestCards(jsonResponse.quests);
 }
 
 function updateQuickObjectiveSlider(

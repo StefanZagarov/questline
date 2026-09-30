@@ -6,6 +6,19 @@ const EDGE_CURVE = 60;
 const VISIBLE_OBJECTIVE_ROWS = 5;
 const CANVAS_BOTTOM_GUTTER = 32;
 const QUICK_VIEW_TRANSITION_MS = 140;
+const allQuests = document.querySelectorAll(".adventure-quest");
+const questsLookup = {};
+allQuests.forEach((quest) => {
+  const prerequisites = quest.dataset.prerequisites
+    .split(",")
+    .map((id) => id.trim())
+    .filter(Boolean); // prevents [""] array if prerequisite quests do not exist
+
+  prerequisites.forEach((prerequisiteId) => {
+    questsLookup[prerequisiteId] ??= [];
+    questsLookup[prerequisiteId].push(quest.dataset.questId);
+  });
+});
 
 function limitObjectiveLists() {
   document.querySelectorAll(".objective-quick-list").forEach((list) => {
@@ -28,7 +41,8 @@ function limitObjectiveLists() {
 function fitAdventureCanvas() {
   if (!canvas) return;
 
-  const minimumHeight = Number.parseFloat(getComputedStyle(canvas).minHeight) || 680;
+  const minimumHeight =
+    Number.parseFloat(getComputedStyle(canvas).minHeight) || 680;
   let requiredHeight = minimumHeight;
 
   document.querySelectorAll(".adventure-quest").forEach((questGroup) => {
@@ -101,7 +115,7 @@ document.querySelectorAll(".adventure-card-frame .qcard").forEach((card) => {
 
 // Return the point on one Quest group's edge that faces another group, plus the
 // direction in which the curve should leave that edge.
-function anchor(group, otherGroup) {
+function getEdgeAnchor(group, otherGroup) {
   const centerX = group.offsetLeft + group.offsetWidth / 2;
   const centerY = group.offsetTop + group.offsetHeight / 2;
   const otherCenterX = otherGroup.offsetLeft + otherGroup.offsetWidth / 2;
@@ -137,8 +151,7 @@ function drawEdges() {
   if (!canvas || !edges) return;
 
   edges.replaceChildren();
-
-  document.querySelectorAll(".adventure-quest").forEach((questGroup) => {
+  allQuests.forEach((questGroup) => {
     const prerequisiteIds = questGroup.dataset.prerequisites
       .split(",")
       .map((id) => id.trim())
@@ -151,8 +164,8 @@ function drawEdges() {
 
       if (!prerequisiteGroup) return;
 
-      const start = anchor(prerequisiteGroup, questGroup);
-      const end = anchor(questGroup, prerequisiteGroup);
+      const start = getEdgeAnchor(prerequisiteGroup, questGroup);
+      const end = getEdgeAnchor(questGroup, prerequisiteGroup);
       const firstControlX = start.x + start.directionX * EDGE_CURVE;
       const firstControlY = start.y + start.directionY * EDGE_CURVE;
       const secondControlX = end.x + end.directionX * EDGE_CURVE;
@@ -180,6 +193,90 @@ function drawEdges() {
       edges.appendChild(path);
     });
   });
+}
+
+export function updateConfirmedQuestCards(questsResponse) {
+  Object.entries(questsResponse).forEach(([questId, questData]) => {
+    const mapQuest = document.querySelector(
+      `[data-quest-id="${questId}"] .qcard`,
+    );
+
+    updateQuestCard(
+      mapQuest,
+      questData.effective_complete,
+      questData.is_unlocked,
+    );
+  });
+}
+
+export function updateOptimisticQuestCards(quest) {
+  const questCard = quest.querySelector(".qcard");
+  // We use the quick view objectives here since they update optimistically, so before the server response, we use that to further draw optimistic data
+  const questQuickObjectives = quest.querySelectorAll(".objective-quick-row");
+  const completeQuestQuickObjectives = quest.querySelectorAll(
+    ".objective-quick-row.is-complete",
+  );
+  const isComplete =
+    questQuickObjectives.length === completeQuestQuickObjectives.length;
+  const isUnlocked = quest.dataset.questIsUnlocked === "true";
+  const previouslyComplete = questCard.classList.contains("qcard-done");
+  const nextQuests = questsLookup[quest.dataset.questId];
+
+  updateQuestCard(questCard, isComplete, isUnlocked);
+
+  // Optimistically update the linked quest cards
+  if (nextQuests && previouslyComplete !== isComplete) {
+    nextQuests.forEach((questId) => {
+      const nextQuest = document.querySelector(`[data-quest-id="${questId}"]`);
+      const nextQuestQuickObjectives = nextQuest.querySelectorAll(
+        ".objective-quick-row",
+      );
+      const nextCompleteQuestQuickObjectives = nextQuest.querySelectorAll(
+        ".objective-quick-row.is-complete",
+      );
+
+      const nextQuestCard = nextQuest.querySelector(".qcard");
+
+      const nextQuestIsComplete =
+        nextQuestQuickObjectives.length ===
+        nextCompleteQuestQuickObjectives.length;
+      const prerequisiteQuestsIds = nextQuest.dataset.prerequisites
+        .split(",")
+        .map((id) => id.trim())
+        .filter(Boolean);
+
+      const prerequisiteQuestsAreUnlocked = prerequisiteQuestsIds.every((id) =>
+        document
+          .querySelector(`[data-quest-id="${id}"] .qcard`)
+          .classList.contains("qcard-done"),
+      );
+
+      updateQuestCard(
+        nextQuestCard,
+        nextQuestIsComplete,
+        prerequisiteQuestsAreUnlocked,
+      );
+    });
+  }
+}
+
+function updateQuestCard(mapQuest, isComplete, isUnlocked) {
+  if (isUnlocked && isComplete) {
+    mapQuest.classList.add("qcard-done");
+
+    mapQuest.classList.remove("qcard-open", "glow");
+    mapQuest.classList.remove("qcard-locked");
+  } else if (isUnlocked) {
+    mapQuest.classList.add("qcard-open", "glow");
+
+    mapQuest.classList.remove("qcard-done");
+    mapQuest.classList.remove("qcard-locked");
+  } else {
+    mapQuest.classList.add("qcard-locked");
+
+    mapQuest.classList.remove("qcard-open", "glow");
+    mapQuest.classList.remove("qcard-done");
+  }
 }
 
 updateAdventureLayout();
