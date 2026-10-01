@@ -1,5 +1,16 @@
 const canvas = document.querySelector(".adventure-canvas");
 const edges = document.querySelector("[data-edges]");
+const questlineState = document.querySelector("[data-questline-state]");
+const completedMainQuestsCount = document.querySelector(
+  "[data-completed-main-quests]",
+);
+const mainProgressPercent = document.querySelector(
+  "[data-main-progress-percent]",
+);
+const mainProgressBar = document.querySelector("[data-main-progress-bar]");
+const mainProgressBarFill = document.querySelector(
+  "[data-main-progress-bar-fill]",
+);
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const EDGE_CURVE = 60;
@@ -208,6 +219,7 @@ export function updateConfirmedQuestCards(questsResponse) {
       questData.is_unlocked,
     );
   });
+  drawEdges();
 }
 
 export function updateOptimisticQuestCards(quest) {
@@ -229,6 +241,7 @@ export function updateOptimisticQuestCards(quest) {
   if (previouslyComplete !== isComplete) {
     updateOptimisticNextQuestCard(quest.dataset.questId);
   }
+  drawEdges();
 }
 
 // Previews the Quests after a Quest whose done state just flipped, then recurses for each one that flips too
@@ -307,6 +320,44 @@ function updateQuestCard(mapQuest, isComplete, isUnlocked) {
     mapQuest.classList.remove("qcard-open", "glow");
     mapQuest.classList.remove("qcard-done");
   }
+}
+
+export function updateProgressHud(
+  questSummary,
+  mainQuestlineProgressRatio,
+  optionalQuestlineProgressRatio,
+) {
+  const optionalProgressPercent = document.querySelector(
+    "[data-optional-progress-percent]",
+  );
+  if (optionalProgressPercent) {
+    optionalProgressPercent.textContent = `✦ BONUS ${roundHalfToEven(optionalQuestlineProgressRatio * 100)}%`;
+  }
+
+  if (
+    questSummary.main_total > 0 &&
+    questSummary.completed_main === questSummary.main_total
+  ) {
+    questlineState.textContent = "★ QUESTLINE COMPLETED";
+  } else {
+    questlineState.textContent = "⚑ ADVENTURE IN PROGRESS";
+  }
+
+  const mainProgressPercentValue = roundHalfToEven(
+    mainQuestlineProgressRatio * 100,
+  );
+  completedMainQuestsCount.textContent = `${questSummary.completed_main} / ${questSummary.main_total} QUESTS`;
+  mainProgressPercent.textContent = `${mainProgressPercentValue}%`;
+  mainProgressBar.setAttribute("aria-valuenow", mainProgressPercentValue);
+  mainProgressBarFill.style.width = `${mainProgressPercentValue}%`;
+}
+
+// Synchronise how JavaScript should round to how Python rounds with its quirk: Even numbers that end on exactly .5 are rounded down in python
+function roundHalfToEven(float) {
+  if (Math.trunc(float) % 2 === 0 && float % 1 === 0.5)
+    return Math.floor(float);
+
+  return Math.round(float);
 }
 
 updateAdventureLayout();

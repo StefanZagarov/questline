@@ -284,9 +284,7 @@ quests.forEach((quest) => {
           try {
             const response = await fetch(objective.update_url, {
               method: "POST",
-              headers: {
-                "X-CSRFToken": csrfToken,
-              },
+              headers: { "X-CSRFToken": csrfToken },
               body,
             });
 
@@ -559,6 +557,7 @@ function updateConfirmedMap(jsonResponse) {
     }
   });
   updateConfirmedQuestCards(jsonResponse.quests);
+  // TODO: Update progress hud
 }
 
 function updateQuickObjectiveSlider(

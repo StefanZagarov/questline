@@ -24,29 +24,32 @@
       <span class="topbar-divider" aria-hidden="true"></span>
       <div class="topbar-quest">
         {% if progress.quests_summary.main_total > 0 and progress.quests_summary.completed_main == progress.quests_summary.main_total %}
-          <div class="kicker">★ QUESTLINE COMPLETED</div>
+          <div class="kicker" data-questline-state>★ QUESTLINE COMPLETED</div>
         {% else %}
-          <div class="kicker">⚑ ADVENTURE IN PROGRESS</div>
+          <div class="kicker" data-questline-state>⚑ ADVENTURE IN PROGRESS</div>
         {% endif %}
         <div class="quest-name">{{ enrollment.questline }}</div>
       </div>
       <div class="topbar-progress adventure-progress">
         <div class="bar-labels">
-          <span>{{ progress.quests_summary.completed_main }} / {{ progress.quests_summary.main_total }} QUESTS</span>
+          <span data-completed-main-quests>{{ progress.quests_summary.completed_main }} / {{ progress.quests_summary.main_total }} QUESTS</span>
           {% widthratio progress.main_questline_progress_ratio 1 100 as main_progress_percent %}
-          <span>{{ main_progress_percent }}%</span>
+          <span data-main-progress-percent>{{ main_progress_percent }}%</span>
         </div>
-        <div class="bar-track"
+        <div data-main-progress-bar
+             class="bar-track"
              role="progressbar"
              aria-label="Required progress"
              aria-valuemin="0"
              aria-valuemax="100"
              aria-valuenow="{{ main_progress_percent }}">
-          <div class="bar-fill" style="width: {{ main_progress_percent }}%"></div>
+          <div data-main-progress-bar-fill
+               class="bar-fill"
+               style="width: {{ main_progress_percent }}%"></div>
         </div>
         {% if progress.quests_summary.optional_total %}
           {% widthratio progress.optional_questline_progress_ratio 1 100 as optional_progress_percent %}
-          <div class="adventure-bonus">✦ BONUS {{ optional_progress_percent }}%</div>
+          <div data-optional-progress-percent class="adventure-bonus">✦ BONUS {{ optional_progress_percent }}%</div>
         {% endif %}
       </div>
     </div>
