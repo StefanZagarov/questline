@@ -1,6 +1,8 @@
 import {
-  updateConfirmedQuestCards,
-  updateOptimisticQuestCards,
+  getQuestState,
+  updateObjectiveConfirmed,
+  updateObjectivePreview,
+  updateObjectiveRollback,
 } from "./adventure.js";
 
 const quests = document.querySelectorAll(".adventure-quest");
@@ -74,15 +76,19 @@ quests.forEach((quest) => {
       }
     });
 
+    const questId = data.questId;
+    const questState = getQuestState(questId);
+    // The JSON only supplies definitions (titles, ranges, URLs); live values come from the shared state
     const objectives = JSON.parse(data.questObjectives);
-    const objectiveValues = Object.values(objectives);
+    const objectiveValues = Object.values(questState.objectives);
     drawer.querySelector("[data-objectives-count]").textContent =
-      `${objectiveValues.filter((objective) => objective.is_complete).length} / ${objectiveValues.length}\u00A0\u00A0DONE`;
+      `${objectiveValues.filter((objective) => objective.isComplete).length} / ${objectiveValues.length}\u00A0\u00A0DONE`;
 
     const objectivesContainer = drawer.querySelector("[data-quest-objectives]");
     const emptyObjectivesMessage = drawer.querySelector("[data-empty-quest]");
+    // Controls follow the server-confirmed lock, never an optimistic unlock
     const controlsDisabled =
-      data.questIsUnlocked !== "true" || data.questIsInvalid === "true";
+      !questState.confirmedIsUnlocked || data.questIsInvalid === "true";
 
     // Since the same drawer is reused, we need to clear previously drawn quests
     objectivesContainer.replaceChildren();
@@ -110,29 +116,22 @@ quests.forEach((quest) => {
       input.disabled = controlsDisabled;
 
       const objectiveItem = objectiveRow.querySelector("[data-objective-row]");
-      if (objective.is_complete) objectiveItem.classList.add("is-complete");
+      const objectiveState = questState.objectives[objectiveId];
+      if (objectiveState.isComplete) objectiveItem.classList.add("is-complete");
 
       if (objective.type === "checklistobjective") {
-        let confirmedChecked = objective.is_complete;
-        input.checked = confirmedChecked;
+        input.checked = objectiveState.isComplete;
 
         input.addEventListener("change", async (event) => {
           errorMessage.hidden = true;
           errorMessage.textContent = "";
 
-          updateDrawerObjectiveComplete(
-            objectiveItem,
-            event.currentTarget.checked,
-          );
-          updateQuickObjectiveComplete(
-            quest,
-            objectiveId,
-            event.currentTarget.checked,
-          );
-          updateOptimisticQuestCards(quest);
+          const sentValue = event.currentTarget.checked;
+          updateDrawerObjectiveComplete(objectiveItem, sentValue);
+          updateObjectivePreview(questId, objectiveId, sentValue);
 
           const body = new FormData();
-          body.append("is_complete", String(event.currentTarget.checked));
+          body.append("is_complete", String(sentValue));
 
           const csrfToken = document.querySelector(
             "[name=csrfmiddlewaretoken]",
@@ -151,45 +150,33 @@ quests.forEach((quest) => {
 
             // response.ok still handles server-reported HTTP errors.
             if (!response.ok) {
-              input.checked = confirmedChecked;
-              updateDrawerObjectiveComplete(objectiveItem, confirmedChecked);
-              updateQuickObjectiveComplete(
-                quest,
-                objectiveId,
-                confirmedChecked,
-              );
-              updateOptimisticQuestCards(quest);
+              updateObjectiveRollback(questId, objectiveId, sentValue);
+              updateDrawerChecklist(input, objectiveItem, objectiveState);
               errorMessage.textContent = responseData.error;
               errorMessage.hidden = false;
               return;
             }
 
-            confirmedChecked = responseData.changed_objective.is_complete;
-            input.checked = confirmedChecked;
-            updateDrawerObjectiveComplete(objectiveItem, confirmedChecked);
-            updateConfirmedMap(responseData);
+            updateObjectiveConfirmed(responseData, sentValue);
+            updateDrawerChecklist(input, objectiveItem, objectiveState);
             // catch handles missing responses, connection failures, and unreadable responses.
           } catch {
-            input.checked = confirmedChecked;
-            updateDrawerObjectiveComplete(objectiveItem, confirmedChecked);
-            updateQuickObjectiveComplete(quest, objectiveId, confirmedChecked);
-            updateOptimisticQuestCards(quest);
+            updateObjectiveRollback(questId, objectiveId, sentValue);
+            updateDrawerChecklist(input, objectiveItem, objectiveState);
             errorMessage.textContent =
               "Unable to save. Check your connection and try again.";
             errorMessage.hidden = false;
           }
         });
       } else if (objective.type === "sliderobjective") {
-        let confirmedValue = objective.current_value;
         let sliderSaveTimer;
         input.min = objective.min_value;
         input.max = objective.goal_value;
-        input.value = confirmedValue;
 
         const currentValue = objectiveRow.querySelector(
           "[data-objective-current]",
         );
-        currentValue.textContent = confirmedValue;
+        updateDrawerSlider(input, currentValue, objectiveItem, objectiveState);
 
         const minusButton = objectiveRow.querySelector(
           "[data-objective-step='-1']",
@@ -199,22 +186,8 @@ quests.forEach((quest) => {
           if (currentValueInt === objective.min_value) return;
 
           const step = Number(minusButton.dataset.objectiveStep);
-          const nextValue = currentValueInt + step;
-          input.value = nextValue;
-          currentValue.textContent = nextValue;
-
-          updateQuickObjectiveSlider(
-            quest,
-            objectiveId,
-            currentValue.textContent,
-            objective.min_value,
-            objective.goal_value,
-          );
-          updateDrawerObjectiveComplete(
-            objectiveItem,
-            Number(currentValue.textContent) >= objective.goal_value,
-          );
-          updateOptimisticQuestCards(quest);
+          updateObjectivePreview(questId, objectiveId, currentValueInt + step);
+          updateDrawerSlider(input, currentValue, objectiveItem, objectiveState);
 
           window.clearTimeout(sliderSaveTimer);
           sliderSaveTimer = window.setTimeout(() => {
@@ -230,22 +203,8 @@ quests.forEach((quest) => {
           if (currentValueInt === objective.goal_value) return;
 
           const step = Number(plusButton.dataset.objectiveStep);
-          const nextValue = currentValueInt + step;
-          input.value = nextValue;
-          currentValue.textContent = nextValue;
-
-          updateQuickObjectiveSlider(
-            quest,
-            objectiveId,
-            currentValue.textContent,
-            objective.min_value,
-            objective.goal_value,
-          );
-          updateDrawerObjectiveComplete(
-            objectiveItem,
-            Number(currentValue.textContent) >= objective.goal_value,
-          );
-          updateOptimisticQuestCards(quest);
+          updateObjectivePreview(questId, objectiveId, currentValueInt + step);
+          updateDrawerSlider(input, currentValue, objectiveItem, objectiveState);
 
           window.clearTimeout(sliderSaveTimer);
           sliderSaveTimer = window.setTimeout(() => {
@@ -254,28 +213,21 @@ quests.forEach((quest) => {
         });
 
         input.addEventListener("input", (event) => {
-          currentValue.textContent = event.currentTarget.value;
-
-          updateQuickObjectiveSlider(
-            quest,
+          updateObjectivePreview(
+            questId,
             objectiveId,
-            currentValue.textContent,
-            objective.min_value,
-            objective.goal_value,
+            Number(event.currentTarget.value),
           );
-          updateDrawerObjectiveComplete(
-            objectiveItem,
-            Number(currentValue.textContent) >= objective.goal_value,
-          );
-          updateOptimisticQuestCards(quest);
+          updateDrawerSlider(input, currentValue, objectiveItem, objectiveState);
         });
 
         input.addEventListener("change", async (event) => {
           errorMessage.hidden = true;
           errorMessage.textContent = "";
 
+          const sentValue = Number(event.currentTarget.value);
           const body = new FormData();
-          body.append("current_value", String(event.currentTarget.value));
+          body.append("current_value", String(sentValue));
 
           const csrfToken = document.querySelector(
             "[name=csrfmiddlewaretoken]",
@@ -292,55 +244,22 @@ quests.forEach((quest) => {
 
             // response.ok still handles server-reported HTTP errors.
             if (!response.ok) {
-              input.value = confirmedValue;
-              currentValue.textContent = confirmedValue;
+              updateObjectiveRollback(questId, objectiveId, sentValue);
+              updateDrawerSlider(input, currentValue, objectiveItem, objectiveState);
               errorMessage.textContent = responseData.error;
               errorMessage.hidden = false;
-
-              updateQuickObjectiveSlider(
-                quest,
-                objectiveId,
-                confirmedValue,
-                objective.min_value,
-                objective.goal_value,
-              );
-              updateDrawerObjectiveComplete(
-                objectiveItem,
-                Number(confirmedValue) >= objective.goal_value,
-              );
-              updateOptimisticQuestCards(quest);
-
               return;
             }
 
-            confirmedValue = responseData.changed_objective.current_value;
-            input.value = confirmedValue;
-            currentValue.textContent = confirmedValue;
-            updateDrawerObjectiveComplete(
-              objectiveItem,
-              responseData.changed_objective.is_complete,
-            );
-            updateConfirmedMap(responseData);
+            updateObjectiveConfirmed(responseData, sentValue);
+            updateDrawerSlider(input, currentValue, objectiveItem, objectiveState);
             // catch handles missing responses, connection failures, and unreadable responses.
           } catch {
-            input.value = confirmedValue;
-            currentValue.textContent = confirmedValue;
+            updateObjectiveRollback(questId, objectiveId, sentValue);
+            updateDrawerSlider(input, currentValue, objectiveItem, objectiveState);
             errorMessage.textContent =
               "Unable to save. Check your connection and try again.";
             errorMessage.hidden = false;
-
-            updateQuickObjectiveSlider(
-              quest,
-              objectiveId,
-              confirmedValue,
-              objective.min_value,
-              objective.goal_value,
-            );
-            updateDrawerObjectiveComplete(
-              objectiveItem,
-              Number(confirmedValue) >= objective.goal_value,
-            );
-            updateOptimisticQuestCards(quest);
           }
         });
 
@@ -453,33 +372,16 @@ drawer.addEventListener("click", (event) => {
 });
 
 /*{
-    success: true,
-
     changed_objective: {
       id: 12,
       quest_id: 3,
       is_complete: true,
       current_value: null,       // number for a Slider
-      objective_progress: 1       // ratio from 0 to 1
-    }
+    },
 
     quests: {
-      "3": {
-        is_unlocked: true,
-        effective_complete: true,
-        objectives_summary: {
-          objectives_complete: 2,
-          total_objectives: 2
-        }
-      },
-      "4": {
-        is_unlocked: true,
-        effective_complete: false,
-        objectives_summary: {
-          objectives_complete: 0,
-          total_objectives: 3
-        }
-      }
+      "3": { is_unlocked: true, effective_complete: true },
+      "4": { is_unlocked: true, effective_complete: false },
       // One entry for every Quest; IDs are string keys in JavaScript.
     },
 
@@ -492,9 +394,8 @@ drawer.addEventListener("click", (event) => {
 
     main_questline_progress_ratio: 0.3,
     optional_questline_progress_ratio: 0,
-    invalid_quests: []            // Quest IDs
   } */
-// Objectives
+// Objectives (data-quest-objectives on each Quest wrapper; live values are read from the shared state instead)
 /*   {
     "12": {
       title: "Gather supplies",
@@ -502,7 +403,6 @@ drawer.addEventListener("click", (event) => {
       description: "Find what you need",
       is_complete: true,
       current_value: null,
-      objective_progress: 1,
       update_url: "/questline/adventure/..."
     },
     "13": {
@@ -513,84 +413,18 @@ drawer.addEventListener("click", (event) => {
       goal_value: 10,
       is_complete: false,
       current_value: 4,
-      objective_progress: 0.4,
       update_url: "/questline/adventure/..."
     }
   }*/
-function updateConfirmedMap(jsonResponse) {
-  quests.forEach((quest) => {
-    const questId = quest.dataset.questId;
-    const objectives = JSON.parse(quest.dataset.questObjectives);
-    const objectiveId = jsonResponse.changed_objective.id;
-
-    quest.dataset.questIsUnlocked = jsonResponse.quests[questId].is_unlocked;
-    quest.dataset.questEffectiveComplete =
-      jsonResponse.quests[questId].effective_complete;
-
-    if (Number(questId) === jsonResponse.changed_objective.quest_id) {
-      if (objectives[objectiveId].type === "sliderobjective") {
-        objectives[objectiveId].current_value =
-          jsonResponse.changed_objective.current_value;
-
-        updateQuickObjectiveSlider(
-          quest,
-          objectiveId,
-          jsonResponse.changed_objective.current_value,
-          objectives[objectiveId].min_value,
-          objectives[objectiveId].goal_value,
-        );
-      }
-
-      objectives[objectiveId].is_complete =
-        jsonResponse.changed_objective.is_complete;
-      objectives[objectiveId].objective_progress =
-        jsonResponse.changed_objective.objective_progress;
-
-      quest.dataset.questObjectives = JSON.stringify(objectives);
-
-      const questQuickObjective = quest.querySelector(
-        `.objective-quick-row-${objectiveId}`,
-      );
-      jsonResponse.changed_objective.is_complete
-        ? questQuickObjective.classList.add("is-complete")
-        : questQuickObjective.classList.remove("is-complete");
-    }
-  });
-  updateConfirmedQuestCards(jsonResponse.quests);
-  // TODO: Update progress hud
+function updateDrawerChecklist(input, objectiveItem, objectiveState) {
+  input.checked = objectiveState.isComplete;
+  updateDrawerObjectiveComplete(objectiveItem, objectiveState.isComplete);
 }
 
-function updateQuickObjectiveSlider(
-  quest,
-  objectiveId,
-  currentValue,
-  minValue,
-  goalValue,
-) {
-  const questQuickObjective = quest.querySelector(
-    `.objective-quick-row-${objectiveId}`,
-  );
-
-  questQuickObjective.querySelector(".objective-quick-value").textContent =
-    currentValue;
-  questQuickObjective.querySelector(".objective-mini-fill").style.width = `${
-    ((currentValue - minValue) / (goalValue - minValue)) * 100
-  }%`;
-  updateQuickObjectiveComplete(
-    quest,
-    objectiveId,
-    Number(currentValue) >= goalValue,
-  );
-}
-
-function updateQuickObjectiveComplete(quest, objectiveId, isComplete) {
-  const questQuickObjective = quest.querySelector(
-    `.objective-quick-row-${objectiveId}`,
-  );
-
-  isComplete
-    ? questQuickObjective.classList.add("is-complete")
-    : questQuickObjective.classList.remove("is-complete");
+function updateDrawerSlider(input, currentValue, objectiveItem, objectiveState) {
+  input.value = objectiveState.currentValue;
+  currentValue.textContent = objectiveState.currentValue;
+  updateDrawerObjectiveComplete(objectiveItem, objectiveState.isComplete);
 }
 
 function updateDrawerObjectiveComplete(objectiveItem, isComplete) {

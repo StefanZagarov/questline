@@ -1,3 +1,12 @@
+import {
+  applyObjectiveConfirmed,
+  applyObjectivePreview,
+  applyObjectiveRollback,
+  calculateObjectiveProgress,
+  calculateProgressSummary,
+  createQuestStates,
+} from "./adventure-state.js";
+
 const canvas = document.querySelector(".adventure-canvas");
 const edges = document.querySelector("[data-edges]");
 const questlineState = document.querySelector("[data-questline-state]");
@@ -18,19 +27,25 @@ const VISIBLE_OBJECTIVE_ROWS = 5;
 const CANVAS_BOTTOM_GUTTER = 32;
 const QUICK_VIEW_TRANSITION_MS = 140;
 const allQuests = document.querySelectorAll(".adventure-quest");
-// Prerequisite ID -> IDs of the Quests that list it as a prerequisite
-const questsLookup = {};
+// Quest ID -> its wrapper, so rendering never searches the page per Quest
+const questWrappers = {};
+const questSeeds = [];
 allQuests.forEach((quest) => {
-  const prerequisites = quest.dataset.prerequisites
-    .split(",")
-    .map((id) => id.trim())
-    .filter(Boolean); // prevents [""] array if prerequisite quests do not exist
-
-  prerequisites.forEach((prerequisiteId) => {
-    questsLookup[prerequisiteId] ??= [];
-    questsLookup[prerequisiteId].push(quest.dataset.questId);
+  questWrappers[quest.dataset.questId] = quest;
+  questSeeds.push({
+    id: quest.dataset.questId,
+    isOptional: quest.dataset.questIsOptional === "true",
+    isUnlocked: quest.dataset.questIsUnlocked === "true",
+    isDone: quest.dataset.questEffectiveComplete === "true",
+    prerequisiteIds: quest.dataset.prerequisites
+      .split(",")
+      .map((id) => id.trim())
+      .filter(Boolean), // prevents [""] array if prerequisite quests do not exist
+    objectives: JSON.parse(quest.dataset.questObjectives),
   });
 });
+// The page's datasets are only the starting point; from here on this object is the source of truth
+const questStates = createQuestStates(questSeeds);
 
 function limitObjectiveLists() {
   document.querySelectorAll(".objective-quick-list").forEach((list) => {
@@ -120,7 +135,7 @@ document.querySelectorAll(".quest-objective-toggle").forEach((button) => {
   });
 });
 
-// Adventure cards are read-only in this slice; the chevron owns the interaction.
+// The card link's href is a placeholder; clicking the Quest wrapper opens the drawer instead.
 document.querySelectorAll(".adventure-card-frame .qcard").forEach((card) => {
   card.addEventListener("click", (event) => event.preventDefault());
 });
@@ -170,9 +185,7 @@ function drawEdges() {
       .filter(Boolean);
 
     prerequisiteIds.forEach((prerequisiteId) => {
-      const prerequisiteGroup = document.querySelector(
-        `[data-quest-id="${prerequisiteId}"]`,
-      );
+      const prerequisiteGroup = questWrappers[prerequisiteId];
 
       if (!prerequisiteGroup) return;
 
@@ -184,12 +197,8 @@ function drawEdges() {
       const secondControlY = end.y + end.directionY * EDGE_CURVE;
 
       const path = document.createElementNS(SVG_NS, "path");
-      const sourceIsComplete = prerequisiteGroup
-        .querySelector(".qcard")
-        ?.classList.contains("qcard-done");
-      const targetIsOptional = questGroup
-        .querySelector(".qcard")
-        ?.classList.contains("qcard-optional");
+      const sourceIsComplete = questStates[prerequisiteId].isDone;
+      const targetIsOptional = questStates[questGroup.dataset.questId].isOptional;
 
       path.classList.add(
         "map-edge",
@@ -207,100 +216,84 @@ function drawEdges() {
   });
 }
 
-export function updateConfirmedQuestCards(questsResponse) {
-  Object.entries(questsResponse).forEach(([questId, questData]) => {
-    const mapQuest = document.querySelector(
-      `[data-quest-id="${questId}"] .qcard`,
-    );
+export function getQuestState(questId) {
+  return questStates[questId];
+}
 
-    updateQuestCard(
-      mapQuest,
-      questData.effective_complete,
-      questData.is_unlocked,
-    );
-  });
+export function updateObjectivePreview(questId, objectiveId, value) {
+  applyObjectivePreview(questStates, questId, objectiveId, value);
+  updateQuickObjective(questId, objectiveId);
+  updateQuestCards();
+  updateOptimisticProgressHud();
   drawEdges();
 }
 
-export function updateOptimisticQuestCards(quest) {
-  const questCard = quest.querySelector(".qcard");
-  // We use the quick view objectives here since they update optimistically, so before the server response, we use that to further draw optimistic data
-  const questQuickObjectives = quest.querySelectorAll(".objective-quick-row");
-  const completeQuestQuickObjectives = quest.querySelectorAll(
-    ".objective-quick-row.is-complete",
+export function updateObjectiveRollback(questId, objectiveId, sentValue) {
+  applyObjectiveRollback(questStates, questId, objectiveId, sentValue);
+  updateQuickObjective(questId, objectiveId);
+  updateQuestCards();
+  updateOptimisticProgressHud();
+  drawEdges();
+}
+
+export function updateObjectiveConfirmed(response, sentValue) {
+  const hasPendingEdits = applyObjectiveConfirmed(
+    questStates,
+    response,
+    sentValue,
   );
-  const isComplete =
-    questQuickObjectives.length === completeQuestQuickObjectives.length;
-  const isUnlocked = quest.dataset.questIsUnlocked === "true";
-  // Read the card before the redraw to detect whether this edit flipped the Quest
-  const previouslyComplete = questCard.classList.contains("qcard-done");
+  updateQuickObjective(
+    String(response.changed_objective.quest_id),
+    String(response.changed_objective.id),
+  );
+  updateQuestCards();
 
-  updateQuestCard(questCard, isComplete, isUnlocked);
-
-  // Optimistically update the linked quest cards
-  if (previouslyComplete !== isComplete) {
-    updateOptimisticNextQuestCard(quest.dataset.questId);
-  }
+  // With no edits in flight the server's numbers are exact; otherwise they miss the pending edits
+  hasPendingEdits
+    ? updateOptimisticProgressHud()
+    : updateProgressHud(
+        response.quests_summary,
+        response.main_questline_progress_ratio,
+        response.optional_questline_progress_ratio,
+      );
   drawEdges();
 }
 
-// Previews the Quests after a Quest whose done state just flipped, then recurses for each one that flips too
-function updateOptimisticNextQuestCard(flippedQuestId) {
-  const nextQuests = questsLookup[flippedQuestId] ?? [];
+function updateQuestCards() {
+  Object.values(questStates).forEach((questState) => {
+    const questCard = questWrappers[questState.id].querySelector(".qcard");
 
-  nextQuests.forEach((questId) => {
-    const nextQuest = document.querySelector(`[data-quest-id="${questId}"]`);
-    const nextQuestQuickObjectives = nextQuest.querySelectorAll(
-      ".objective-quick-row",
-    );
-    const nextCompleteQuestQuickObjectives = nextQuest.querySelectorAll(
-      ".objective-quick-row.is-complete",
-    );
-
-    const nextQuestCard = nextQuest.querySelector(".qcard");
-
-    // Protect from quest with empty objectives - return false. Otherwise check if the length of objectives matches the length of the completed objectives in quick view elements (the dropdown on each quest card) since there it holds the optimistic complete
-    const nextQuestIsComplete =
-      nextQuestQuickObjectives.length > 0 &&
-      nextQuestQuickObjectives.length ===
-        nextCompleteQuestQuickObjectives.length;
-    const prerequisiteQuestsIds = nextQuest.dataset.prerequisites
-      .split(",")
-      .map((id) => id.trim())
-      .filter(Boolean);
-
-    // Unlocked only if every prerequisite card currently shows done, optimistic redraws included
-    const prerequisiteQuestsAreUnlocked = prerequisiteQuestsIds.every((id) => {
-      const questCard = document.querySelector(
-        `[data-quest-id="${id}"] .qcard`,
-      );
-
-      // If this quest is optional, and the next one is not optional, skip the optional prerequisite, i.e. automatically unlock the next quest, as long as it's the only prerequisite for the next quest
-      if (
-        nextQuest.dataset.questIsOptional === "false" &&
-        questCard.closest(".adventure-quest").dataset.questIsOptional === "true"
-      )
-        return true;
-
-      return questCard.classList.contains("qcard-done");
-    });
-    // Read before the redraw so the flip check compares old and new state
-    const wasQuestComplete = nextQuestCard.classList.contains("qcard-done");
-
-    updateQuestCard(
-      nextQuestCard,
-      nextQuestIsComplete,
-      prerequisiteQuestsAreUnlocked,
-    );
-
-    // Recurse after the redraw so the next Quests read this Quest's new state; stop when it did not flip
-    if (
-      wasQuestComplete !==
-      (nextQuestIsComplete && prerequisiteQuestsAreUnlocked)
-    ) {
-      updateOptimisticNextQuestCard(nextQuest.dataset.questId);
-    }
+    updateQuestCard(questCard, questState.isDone, questState.isUnlocked);
   });
+}
+
+function updateQuickObjective(questId, objectiveId) {
+  const objective = questStates[questId].objectives[objectiveId];
+  const questQuickObjective = questWrappers[questId].querySelector(
+    `.objective-quick-row-${objectiveId}`,
+  );
+
+  objective.isComplete
+    ? questQuickObjective.classList.add("is-complete")
+    : questQuickObjective.classList.remove("is-complete");
+
+  if (objective.type !== "sliderobjective") return;
+
+  questQuickObjective.querySelector(".objective-quick-value").textContent =
+    objective.currentValue;
+  questQuickObjective.querySelector(".objective-mini-fill").style.width = `${
+    calculateObjectiveProgress(objective) * 100
+  }%`;
+}
+
+function updateOptimisticProgressHud() {
+  const progressSummary = calculateProgressSummary(questStates);
+
+  updateProgressHud(
+    progressSummary.questsSummary,
+    progressSummary.mainRatio,
+    progressSummary.optionalRatio,
+  );
 }
 
 function updateQuestCard(mapQuest, isComplete, isUnlocked) {
@@ -322,7 +315,7 @@ function updateQuestCard(mapQuest, isComplete, isUnlocked) {
   }
 }
 
-export function updateProgressHud(
+function updateProgressHud(
   questSummary,
   mainQuestlineProgressRatio,
   optionalQuestlineProgressRatio,

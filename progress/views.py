@@ -63,7 +63,19 @@ class AdventureView(LoginRequiredMixin, views.DetailView):
                 )
 
             # Objectives for each quest, the data is made into JSON format for transportation to the JS script
-            quest_state["objectives_json"] = json.dumps(quest_state["objectives"])
+            # objective_progress is only read by the template's quick view, so it stays out of the JavaScript payload
+            quest_state["objectives_json"] = json.dumps(
+                {
+                    objective_id: {
+                        key: value
+                        for key, value in objective_state.items()
+                        if key != "objective_progress"
+                    }
+                    for objective_id, objective_state in quest_state[
+                        "objectives"
+                    ].items()
+                }
+            )
 
             # Get and write each quest's adventure note (personal for the user note) content (text). If a note is empty, we normalize the field with empty string
             adventure_note = adventure_notes_by_quest_id.get(
@@ -202,19 +214,16 @@ class UpdateObjectiveProgressView(LoginRequiredMixin, views.View):
             objective.id
         ]
         updated_state_json = {
-            "success": True,
             "changed_objective": {
                 "id": objective.id,
                 "quest_id": objective.quest_id,
                 "is_complete": changed_objective["is_complete"],
                 "current_value": changed_objective["current_value"],
-                "objective_progress": changed_objective["objective_progress"],
             },
             "quests": {
                 quest_id: {
                     "is_unlocked": quest_state["is_unlocked"],
                     "effective_complete": quest_state["effective_complete"],
-                    "objectives_summary": quest_state["objectives_summary"],
                 }
                 for quest_id, quest_state in updated_state["quests"].items()
             },
@@ -225,7 +234,6 @@ class UpdateObjectiveProgressView(LoginRequiredMixin, views.View):
             "optional_questline_progress_ratio": updated_state[
                 "optional_questline_progress_ratio"
             ],
-            "invalid_quests": sorted(updated_state["invalid_quests"]),
         }
         return JsonResponse(updated_state_json, status=200)
 
