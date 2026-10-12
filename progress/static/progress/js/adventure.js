@@ -26,25 +26,29 @@ const EDGE_CURVE = 60;
 const VISIBLE_OBJECTIVE_ROWS = 5;
 const CANVAS_BOTTOM_GUTTER = 32;
 const QUICK_VIEW_TRANSITION_MS = 140;
+// All quests data, taken directly from the template's adventure_data parsed json
+const adventureData = JSON.parse(
+  document.getElementById("adventure-data").textContent,
+);
 const allQuests = document.querySelectorAll(".adventure-quest");
 // Quest ID -> its wrapper, so rendering never searches the page per Quest
 const questWrappers = {};
-const questSeeds = [];
 allQuests.forEach((quest) => {
   questWrappers[quest.dataset.questId] = quest;
+});
+
+const questSeeds = [];
+Object.entries(adventureData.quests).forEach(([questId, quest]) => {
   questSeeds.push({
-    id: quest.dataset.questId,
-    isOptional: quest.dataset.questIsOptional === "true",
-    isUnlocked: quest.dataset.questIsUnlocked === "true",
-    isDone: quest.dataset.questEffectiveComplete === "true",
-    prerequisiteIds: quest.dataset.prerequisites
-      .split(",")
-      .map((id) => id.trim())
-      .filter(Boolean), // prevents [""] array if prerequisite quests do not exist
-    objectives: JSON.parse(quest.dataset.questObjectives),
+    id: questId,
+    isOptional: quest.is_optional,
+    isUnlocked: quest.is_unlocked,
+    isDone: quest.is_done,
+    prerequisiteIds: quest.prerequisite_ids.map(String),
+    objectives: quest.objectives,
   });
 });
-// The page's datasets are only the starting point; from here on this object is the source of truth
+// The page's JSON is only the starting point; from here on this object is the source of truth
 const questStates = createQuestStates(questSeeds);
 
 function limitObjectiveLists() {
@@ -179,12 +183,9 @@ function drawEdges() {
 
   edges.replaceChildren();
   allQuests.forEach((questGroup) => {
-    const prerequisiteIds = questGroup.dataset.prerequisites
-      .split(",")
-      .map((id) => id.trim())
-      .filter(Boolean);
+    const questState = questStates[questGroup.dataset.questId];
 
-    prerequisiteIds.forEach((prerequisiteId) => {
+    questState.prerequisiteIds.forEach((prerequisiteId) => {
       const prerequisiteGroup = questWrappers[prerequisiteId];
 
       if (!prerequisiteGroup) return;
@@ -198,7 +199,7 @@ function drawEdges() {
 
       const path = document.createElementNS(SVG_NS, "path");
       const sourceIsComplete = questStates[prerequisiteId].isDone;
-      const targetIsOptional = questStates[questGroup.dataset.questId].isOptional;
+      const targetIsOptional = questState.isOptional;
 
       path.classList.add(
         "map-edge",
@@ -218,6 +219,18 @@ function drawEdges() {
 
 export function getQuestState(questId) {
   return questStates[questId];
+}
+
+export function getQuestData(questId) {
+  return adventureData.quests[questId];
+}
+
+export function getMainQuestTotal() {
+  return adventureData.main_quest_total;
+}
+
+export function updateAdventureNoteConfirmed(questId, noteContent) {
+  adventureData.quests[questId].adventure_note_content = noteContent;
 }
 
 export function updateObjectivePreview(questId, objectiveId, value) {

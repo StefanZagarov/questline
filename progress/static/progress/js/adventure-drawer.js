@@ -1,5 +1,8 @@
 import {
+  getMainQuestTotal,
+  getQuestData,
   getQuestState,
+  updateAdventureNoteConfirmed,
   updateObjectiveConfirmed,
   updateObjectivePreview,
   updateObjectiveRollback,
@@ -13,24 +16,28 @@ const adventureNoteStatus = drawer.querySelector(
 );
 
 let selectedAdventureNoteUpdateUrl = "";
-// Read and store in the adventure note field dataset
+// The opened quest's note as last confirmed by the server
 let confirmedAdventureNoteContent = "";
 let adventureNoteSaveTimer;
-// Specifically for adventure notes value update in the dom
-let openedQuest;
+// Specifically for adventure notes value update in the page data
+let openedQuestId;
 let noteIsSaving;
+const objectiveRequests = {};
+const objectiveRows = {};
+const adventureNoteRequests = {};
 
 quests.forEach((quest) => {
-  quest.addEventListener("click", (event) => {
-    // Reopening the same quest while its note save hasn't been confirmed yet (timer waiting or reply not back), so the dataset still holds the older note
+  quest.addEventListener("click", () => {
+    const questId = quest.dataset.questId;
+    // Reopening the same quest while its note save hasn't been confirmed yet (timer waiting or reply not back), so the page data still holds the older note
     const reopenedWithUnsavedNote =
-      openedQuest === quest &&
+      openedQuestId === questId &&
       adventureNoteField.value !== confirmedAdventureNoteContent;
 
     // flushing: when a debounced action is pending, you run it right away instead of dropping it
     if (noteIsSaving) {
       saveAdventureNote(
-        openedQuest,
+        openedQuestId,
         adventureNoteField.value,
         adventureNoteField,
         adventureNoteStatus,
@@ -38,23 +45,22 @@ quests.forEach((quest) => {
       );
     }
 
-    openedQuest = quest;
-    const clickedItem = event.currentTarget;
-    const data = clickedItem.dataset;
+    openedQuestId = questId;
+    const questData = getQuestData(questId);
 
     const crumb = drawer.querySelector("[data-adventure-crumb]");
-    const isOptional = data.questIsOptional === "true" ? true : false;
+    const isOptional = questData.is_optional;
 
     crumb.textContent = isOptional
       ? ""
-      : `QUEST ${data.questIndex} OF ${data.questTotal}`;
+      : `QUEST ${questData.index} OF ${getMainQuestTotal()}`;
     drawer.querySelector("[data-adventure-optional]").hidden = !isOptional;
 
-    drawer.querySelector("[data-quest-title]").textContent = data.questTitle;
+    drawer.querySelector("[data-quest-title]").textContent = questData.title;
 
     const description = drawer.querySelector("[data-quest-description]");
-    description.hidden = data.questDescription === "";
-    description.textContent = data.questDescription;
+    description.hidden = questData.description === "";
+    description.textContent = questData.description;
 
     const prerequisitesWrapper = drawer.querySelector(
       "[data-prerequisites-line]",
@@ -62,7 +68,7 @@ quests.forEach((quest) => {
     const prerequisiteQuests = drawer.querySelector(
       "[data-prerequisites-titles]",
     );
-    const prerequisiteQuestsArray = JSON.parse(data.prerequisitesTitles);
+    const prerequisiteQuestsArray = questData.prerequisite_titles;
     prerequisiteQuests.replaceChildren();
     prerequisitesWrapper.hidden = prerequisiteQuestsArray.length === 0;
 
@@ -76,10 +82,9 @@ quests.forEach((quest) => {
       }
     });
 
-    const questId = data.questId;
     const questState = getQuestState(questId);
     // The JSON only supplies definitions (titles, ranges, URLs); live values come from the shared state
-    const objectives = JSON.parse(data.questObjectives);
+    const objectives = questData.objectives;
     const objectiveValues = Object.values(questState.objectives);
     drawer.querySelector("[data-objectives-count]").textContent =
       `${objectiveValues.filter((objective) => objective.isComplete).length} / ${objectiveValues.length}\u00A0\u00A0DONE`;
@@ -88,7 +93,7 @@ quests.forEach((quest) => {
     const emptyObjectivesMessage = drawer.querySelector("[data-empty-quest]");
     // Controls follow the server-confirmed lock, never an optimistic unlock
     const controlsDisabled =
-      !questState.confirmedIsUnlocked || data.questIsInvalid === "true";
+      !questState.confirmedIsUnlocked || questData.is_invalid;
 
     // Since the same drawer is reused, we need to clear previously drawn quests
     objectivesContainer.replaceChildren();
@@ -119,63 +124,33 @@ quests.forEach((quest) => {
       const objectiveState = questState.objectives[objectiveId];
       if (objectiveState.isComplete) objectiveItem.classList.add("is-complete");
 
+      const currentValue = objectiveRow.querySelector(
+        "[data-objective-current]",
+      );
+      objectiveRows[objectiveId] = {
+        input,
+        currentValue,
+        objectiveItem,
+        errorMessage,
+      };
+
       if (objective.type === "checklistobjective") {
         input.checked = objectiveState.isComplete;
 
-        input.addEventListener("change", async (event) => {
+        input.addEventListener("change", (event) => {
           errorMessage.hidden = true;
           errorMessage.textContent = "";
 
-          const sentValue = event.currentTarget.checked;
-          updateDrawerObjectiveComplete(objectiveItem, sentValue);
-          updateObjectivePreview(questId, objectiveId, sentValue);
-
-          const body = new FormData();
-          body.append("is_complete", String(sentValue));
-
-          const csrfToken = document.querySelector(
-            "[name=csrfmiddlewaretoken]",
-          ).value;
-
-          try {
-            const response = await fetch(objective.update_url, {
-              method: "POST",
-              headers: {
-                "X-CSRFToken": csrfToken,
-              },
-              body,
-            });
-
-            const responseData = await response.json();
-
-            // response.ok still handles server-reported HTTP errors.
-            if (!response.ok) {
-              updateObjectiveRollback(questId, objectiveId, sentValue);
-              updateDrawerChecklist(input, objectiveItem, objectiveState);
-              errorMessage.textContent = responseData.error;
-              errorMessage.hidden = false;
-              return;
-            }
-
-            updateObjectiveConfirmed(responseData, sentValue);
-            updateDrawerChecklist(input, objectiveItem, objectiveState);
-            // catch handles missing responses, connection failures, and unreadable responses.
-          } catch {
-            updateObjectiveRollback(questId, objectiveId, sentValue);
-            updateDrawerChecklist(input, objectiveItem, objectiveState);
-            errorMessage.textContent =
-              "Unable to save. Check your connection and try again.";
-            errorMessage.hidden = false;
-          }
+          const value = event.currentTarget.checked;
+          updateDrawerObjectiveComplete(objectiveItem, value);
+          updateObjectivePreview(questId, objectiveId, value);
+          saveObjectiveValue(questId, objectiveId, value);
         });
       } else if (objective.type === "sliderobjective") {
         let sliderSaveTimer;
         input.min = objective.min_value;
         input.max = objective.goal_value;
 
-        const currentValue = objectiveRow.querySelector(
-          "[data-objective-current]",
-        );
         updateDrawerSlider(input, currentValue, objectiveItem, objectiveState);
 
         const minusButton = objectiveRow.querySelector(
@@ -187,7 +162,12 @@ quests.forEach((quest) => {
 
           const step = Number(minusButton.dataset.objectiveStep);
           updateObjectivePreview(questId, objectiveId, currentValueInt + step);
-          updateDrawerSlider(input, currentValue, objectiveItem, objectiveState);
+          updateDrawerSlider(
+            input,
+            currentValue,
+            objectiveItem,
+            objectiveState,
+          );
 
           window.clearTimeout(sliderSaveTimer);
           sliderSaveTimer = window.setTimeout(() => {
@@ -204,7 +184,12 @@ quests.forEach((quest) => {
 
           const step = Number(plusButton.dataset.objectiveStep);
           updateObjectivePreview(questId, objectiveId, currentValueInt + step);
-          updateDrawerSlider(input, currentValue, objectiveItem, objectiveState);
+          updateDrawerSlider(
+            input,
+            currentValue,
+            objectiveItem,
+            objectiveState,
+          );
 
           window.clearTimeout(sliderSaveTimer);
           sliderSaveTimer = window.setTimeout(() => {
@@ -218,49 +203,23 @@ quests.forEach((quest) => {
             objectiveId,
             Number(event.currentTarget.value),
           );
-          updateDrawerSlider(input, currentValue, objectiveItem, objectiveState);
+          updateDrawerSlider(
+            input,
+            currentValue,
+            objectiveItem,
+            objectiveState,
+          );
         });
 
-        input.addEventListener("change", async (event) => {
+        input.addEventListener("change", (event) => {
           errorMessage.hidden = true;
           errorMessage.textContent = "";
 
-          const sentValue = Number(event.currentTarget.value);
-          const body = new FormData();
-          body.append("current_value", String(sentValue));
-
-          const csrfToken = document.querySelector(
-            "[name=csrfmiddlewaretoken]",
-          ).value;
-
-          try {
-            const response = await fetch(objective.update_url, {
-              method: "POST",
-              headers: { "X-CSRFToken": csrfToken },
-              body,
-            });
-
-            const responseData = await response.json();
-
-            // response.ok still handles server-reported HTTP errors.
-            if (!response.ok) {
-              updateObjectiveRollback(questId, objectiveId, sentValue);
-              updateDrawerSlider(input, currentValue, objectiveItem, objectiveState);
-              errorMessage.textContent = responseData.error;
-              errorMessage.hidden = false;
-              return;
-            }
-
-            updateObjectiveConfirmed(responseData, sentValue);
-            updateDrawerSlider(input, currentValue, objectiveItem, objectiveState);
-            // catch handles missing responses, connection failures, and unreadable responses.
-          } catch {
-            updateObjectiveRollback(questId, objectiveId, sentValue);
-            updateDrawerSlider(input, currentValue, objectiveItem, objectiveState);
-            errorMessage.textContent =
-              "Unable to save. Check your connection and try again.";
-            errorMessage.hidden = false;
-          }
+          saveObjectiveValue(
+            questId,
+            objectiveId,
+            Number(event.currentTarget.value),
+          );
         });
 
         objectiveRow
@@ -280,11 +239,11 @@ quests.forEach((quest) => {
     });
 
     window.clearTimeout(adventureNoteSaveTimer);
-    selectedAdventureNoteUpdateUrl = data.adventureNoteUpdate;
+    selectedAdventureNoteUpdateUrl = questData.adventure_note_update_url;
 
-    // Keep the typed note instead of overwriting it with the older dataset copy; the pending save's reply will confirm it or roll it back
+    // Keep the typed note instead of overwriting it with the older page data copy; the pending save's reply will confirm it or roll it back
     if (!reopenedWithUnsavedNote) {
-      confirmedAdventureNoteContent = JSON.parse(data.adventureNoteContent);
+      confirmedAdventureNoteContent = questData.adventure_note_content;
       adventureNoteStatus.textContent = "";
       adventureNoteField.value = confirmedAdventureNoteContent;
     }
@@ -298,7 +257,7 @@ adventureNoteField.addEventListener("input", () => {
 
   const updateUrl = selectedAdventureNoteUpdateUrl;
   // Get a snapshot of the quest so if it changes (user clicks on another quest) before it is saved, the logic still saves to the correct quest
-  const currentQuest = openedQuest;
+  const currentQuestId = openedQuestId;
   const pendingContent = adventureNoteField.value;
   if (!updateUrl) return;
 
@@ -306,7 +265,7 @@ adventureNoteField.addEventListener("input", () => {
   noteIsSaving = true;
   adventureNoteSaveTimer = window.setTimeout(async () => {
     saveAdventureNote(
-      currentQuest,
+      currentQuestId,
       pendingContent,
       adventureNoteField,
       adventureNoteStatus,
@@ -316,13 +275,54 @@ adventureNoteField.addEventListener("input", () => {
 });
 
 async function saveAdventureNote(
-  quest,
+  questId,
   noteContent,
   adventureNoteField,
   adventureNoteStatus,
   updateUrl,
 ) {
   noteIsSaving = false;
+  const adventureNoteRequest = adventureNoteRequests[questId];
+
+  if (adventureNoteRequest) {
+    adventureNoteRequest.hasWaitingContent = true;
+    adventureNoteRequest.waitingContent = noteContent;
+    return;
+  }
+
+  adventureNoteRequests[questId] = {
+    hasWaitingContent: false,
+    waitingContent: "",
+  };
+  await sendAdventureNote(
+    questId,
+    noteContent,
+    adventureNoteField,
+    adventureNoteStatus,
+    updateUrl,
+  );
+
+  const finishedRequest = adventureNoteRequests[questId];
+  delete adventureNoteRequests[questId];
+
+  if (finishedRequest.hasWaitingContent) {
+    saveAdventureNote(
+      questId,
+      finishedRequest.waitingContent,
+      adventureNoteField,
+      adventureNoteStatus,
+      updateUrl,
+    );
+  }
+}
+
+async function sendAdventureNote(
+  questId,
+  noteContent,
+  adventureNoteField,
+  adventureNoteStatus,
+  updateUrl,
+) {
   const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
 
   try {
@@ -336,12 +336,20 @@ async function saveAdventureNote(
     });
     const responseData = await response.json();
 
-    // Save the new input field value to the DOM dataset only if the data is succesfully saved in the database. This allows for the drawer to display the updated value on next opening
+    // Save the new input field value to the page data only if the data is succesfully saved in the database. This allows for the drawer to display the updated value on next opening
     if (response.ok) {
-      quest.dataset.adventureNoteContent = JSON.stringify(noteContent);
+      updateAdventureNoteConfirmed(questId, noteContent);
     }
 
     if (selectedAdventureNoteUpdateUrl !== updateUrl) {
+      return;
+    }
+
+    if (response.ok) {
+      confirmedAdventureNoteContent = noteContent;
+    }
+
+    if (adventureNoteField.value !== noteContent) {
       return;
     }
 
@@ -352,10 +360,10 @@ async function saveAdventureNote(
       return;
     }
 
-    confirmedAdventureNoteContent = noteContent;
     adventureNoteStatus.textContent = "Saved";
   } catch {
     if (selectedAdventureNoteUpdateUrl !== updateUrl) return;
+    if (adventureNoteField.value !== noteContent) return;
 
     adventureNoteField.value = confirmedAdventureNoteContent;
     adventureNoteStatus.textContent =
@@ -371,57 +379,101 @@ drawer.addEventListener("click", (event) => {
   if (event.target === drawer) drawer.close();
 });
 
-/*{
-    changed_objective: {
-      id: 12,
-      quest_id: 3,
-      is_complete: true,
-      current_value: null,       // number for a Slider
-    },
+// Saves an Objective's new value, but only one save per Objective may be on its way at a time
+// If a save is still on its way, the new value waits its turn (a newer value replaces an older waiting one)
+function saveObjectiveValue(questId, objectiveId, value) {
+  const objectiveRequest = objectiveRequests[objectiveId];
 
-    quests: {
-      "3": { is_unlocked: true, effective_complete: true },
-      "4": { is_unlocked: true, effective_complete: false },
-      // One entry for every Quest; IDs are string keys in JavaScript.
-    },
+  if (objectiveRequest) {
+    objectiveRequest.hasWaitingValue = true;
+    objectiveRequest.waitingValue = value;
+    return;
+  }
 
-    quests_summary: {
-      main_total: 5,
-      optional_total: 2,
-      completed_main: 1,
-      completed_optional: 0
-    },
+  objectiveRequests[objectiveId] = {
+    hasWaitingValue: false,
+    waitingValue: null,
+  };
+  sendObjectiveValue(questId, objectiveId, value);
+}
 
-    main_questline_progress_ratio: 0.3,
-    optional_questline_progress_ratio: 0,
-  } */
-// Objectives (data-quest-objectives on each Quest wrapper; live values are read from the shared state instead)
-/*   {
-    "12": {
-      title: "Gather supplies",
-      type: "checklistobjective",
-      description: "Find what you need",
-      is_complete: true,
-      current_value: null,
-      update_url: "/questline/adventure/..."
-    },
-    "13": {
-      title: "Train",
-      type: "sliderobjective",
-      description: "",
-      min_value: 0,
-      goal_value: 10,
-      is_complete: false,
-      current_value: 4,
-      update_url: "/questline/adventure/..."
+// Sends one value to the server and shows the result (saved, or undone with an error)
+// When the server has answered, it sends the value that waited meanwhile, if there is one
+async function sendObjectiveValue(questId, objectiveId, sentValue) {
+  const objective = getQuestData(questId).objectives[objectiveId];
+  const body = new FormData();
+  objective.type === "sliderobjective"
+    ? body.append("current_value", String(sentValue))
+    : body.append("is_complete", String(sentValue));
+
+  const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+
+  try {
+    const response = await fetch(objective.update_url, {
+      method: "POST",
+      headers: { "X-CSRFToken": csrfToken },
+      body,
+    });
+
+    const responseData = await response.json();
+
+    // response.ok still handles server-reported HTTP errors.
+    if (!response.ok) {
+      updateObjectiveRollback(questId, objectiveId, sentValue);
+      updateDrawerObjective(questId, objectiveId, responseData.error);
+    } else {
+      updateObjectiveConfirmed(responseData, sentValue);
+      updateDrawerObjective(questId, objectiveId, "");
     }
-  }*/
+    // catch handles missing responses, connection failures, and unreadable responses.
+  } catch {
+    updateObjectiveRollback(questId, objectiveId, sentValue);
+    updateDrawerObjective(
+      questId,
+      objectiveId,
+      "Unable to save. Check your connection and try again.",
+    );
+  }
+
+  const finishedRequest = objectiveRequests[objectiveId];
+  delete objectiveRequests[objectiveId];
+
+  if (finishedRequest.hasWaitingValue) {
+    // This is what keeps it going: the value that waited is now saved the same way, and anything newer waits for it
+    saveObjectiveValue(questId, objectiveId, finishedRequest.waitingValue);
+  }
+}
+
+function updateDrawerObjective(questId, objectiveId, errorText) {
+  const row = objectiveRows[objectiveId];
+  const objectiveState = getQuestState(questId).objectives[objectiveId];
+
+  if (objectiveState.type === "sliderobjective") {
+    updateDrawerSlider(
+      row.input,
+      row.currentValue,
+      row.objectiveItem,
+      objectiveState,
+    );
+  } else {
+    updateDrawerChecklist(row.input, row.objectiveItem, objectiveState);
+  }
+
+  row.errorMessage.textContent = errorText;
+  row.errorMessage.hidden = errorText === "";
+}
+
 function updateDrawerChecklist(input, objectiveItem, objectiveState) {
   input.checked = objectiveState.isComplete;
   updateDrawerObjectiveComplete(objectiveItem, objectiveState.isComplete);
 }
 
-function updateDrawerSlider(input, currentValue, objectiveItem, objectiveState) {
+function updateDrawerSlider(
+  input,
+  currentValue,
+  objectiveItem,
+  objectiveState,
+) {
   input.value = objectiveState.currentValue;
   currentValue.textContent = objectiveState.currentValue;
   updateDrawerObjectiveComplete(objectiveItem, objectiveState.isComplete);

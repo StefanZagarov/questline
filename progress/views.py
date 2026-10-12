@@ -29,28 +29,19 @@ class AdventureView(LoginRequiredMixin, views.DetailView):
         adventure_notes_by_quest_id = {
             note.quest_id: note.content for note in self.object.adventurenote_set.all()
         }
+        # Values shared by every quest are stored once, at the top level
+        adventure_data = {
+            "main_quest_total": context["progress"]["quests_summary"]["main_total"],
+            "quests": {},
+        }
         # Keeping count of every main quest for the "Quest X of Y" label
         main_index = 1
         for quest_state in context["progress"]["quests"].values():
-            # Add the update url to each quest so JS knows what endpoint to use to send the new Adventure Note data to the BE
-            quest_state["update_url"] = reverse(
-                "update-adventure-note",
-                kwargs={
-                    "enrollment_pk": self.object.id,
-                    "quest_pk": quest_state["quest"].id,
-                },
-            )
+            quest = quest_state["quest"]
 
-            if not quest_state["quest"].is_optional:
+            if not quest.is_optional:
                 quest_state["main_index"] = main_index
                 main_index += 1
-            # Serialize prerequisite titles for the Adventure drawer dataset.
-            quest_state["prerequisite_titles_json"] = json.dumps(
-                [
-                    prerequisite.title
-                    for prerequisite in quest_state["quest"].prerequisite_quests.all()
-                ]
-            )
 
             # Add the update url to each objective so JS knows what endpoint to use to send the new objective data to the BE
             for objective_id, objective_state in quest_state["objectives"].items():
@@ -62,10 +53,22 @@ class AdventureView(LoginRequiredMixin, views.DetailView):
                     },
                 )
 
-            # Objectives for each quest, the data is made into JSON format for transportation to the JS script
-            # objective_progress is only read by the template's quick view, so it stays out of the JavaScript payload
-            quest_state["objectives_json"] = json.dumps(
-                {
+            prerequisites = quest.prerequisite_quests.all()
+            # Plain, JSON-safe copy of everything JS reads for this quest; json_script serializes it once in the template
+            adventure_data["quests"][quest.id] = {
+                "index": quest_state.get("main_index"),
+                "title": quest.title,
+                "description": quest.description,
+                "is_optional": quest.is_optional,
+                "is_unlocked": quest_state["is_unlocked"],
+                "is_done": quest_state["effective_complete"],
+                "is_invalid": quest.id in context["progress"]["invalid_quests"],
+                "prerequisite_ids": [prerequisite.id for prerequisite in prerequisites],
+                "prerequisite_titles": [
+                    prerequisite.title for prerequisite in prerequisites
+                ],
+                # objective_progress is only read by the template's quick view, so it stays out of the JavaScript payload
+                "objectives": {
                     objective_id: {
                         key: value
                         for key, value in objective_state.items()
@@ -74,15 +77,20 @@ class AdventureView(LoginRequiredMixin, views.DetailView):
                     for objective_id, objective_state in quest_state[
                         "objectives"
                     ].items()
-                }
-            )
+                },
+                # A quest without a saved note gets an empty string
+                "adventure_note_content": adventure_notes_by_quest_id.get(quest.id, ""),
+                # The endpoint JS sends this quest's new Adventure Note to
+                "adventure_note_update_url": reverse(
+                    "update-adventure-note",
+                    kwargs={
+                        "enrollment_pk": self.object.id,
+                        "quest_pk": quest.id,
+                    },
+                ),
+            }
 
-            # Get and write each quest's adventure note (personal for the user note) content (text). If a note is empty, we normalize the field with empty string
-            adventure_note = adventure_notes_by_quest_id.get(
-                quest_state["quest"].id, ""
-            )
-            quest_state["adventure_note_content"] = json.dumps(adventure_note)
-
+        context["adventure_data"] = adventure_data
         return context
 
 
