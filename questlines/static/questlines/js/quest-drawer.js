@@ -79,10 +79,26 @@ function openDrawer(action, text) {
 // Empty every error box so old messages don't stack under the new ones.
 function clearErrors() {
   document
-    .querySelectorAll("[data-errors-for], [data-non-field-errors]")
+    .querySelectorAll(
+      "[data-errors-for], [data-non-field-errors], [data-row-errors-for]",
+    )
     .forEach((box) => {
       box.innerHTML = "";
     });
+}
+
+function fillErrorBox(box, fieldErrors) {
+  // Same markup Django renders, so the existing .errorlist CSS applies.
+  const list = document.createElement("ul");
+  list.className = "errorlist";
+
+  fieldErrors.forEach((error) => {
+    const item = document.createElement("li");
+    item.textContent = error.message; // textContent, not innerHTML — XSS
+    list.appendChild(item);
+  });
+
+  box.appendChild(list);
 }
 
 // Paint Django's error JSON: {"title": [{"message": "...", "code": "..."}]}
@@ -96,17 +112,27 @@ function showErrors(errors) {
 
     if (!box) return; // field not rendered — bail rather than crash
 
-    // Same markup Django renders, so the existing .errorlist CSS applies.
-    const list = document.createElement("ul");
-    list.className = "errorlist";
+    fillErrorBox(box, fieldErrors);
+  });
+}
 
-    fieldErrors.forEach((error) => {
-      const item = document.createElement("li");
-      item.textContent = error.message; // textContent, not innerHTML — XSS
-      list.appendChild(item);
-    });
+function showObjectiveErrors(objectiveErrors) {
+  const rows = objectivesList.querySelectorAll(".objective-row");
 
-    box.appendChild(list);
+  objectiveErrors.forEach((objectiveError) => {
+    const row = rows[objectiveError.order];
+
+    if (!row) return;
+
+    Object.entries(objectiveError.fields).forEach(
+      ([fieldName, fieldErrors]) => {
+        const box = row.querySelector(`[data-row-errors-for="${fieldName}"]`);
+
+        if (!box) return;
+
+        fillErrorBox(box, fieldErrors);
+      },
+    );
   });
 }
 
@@ -150,7 +176,14 @@ form.addEventListener("submit", async (event) => {
   }
 
   const data = await response.json();
-  showErrors(data.errors);
+
+  if (data.errors) {
+    showErrors(data.errors);
+  }
+
+  if (data.objective_errors) {
+    showObjectiveErrors(data.objective_errors);
+  }
 });
 
 // ---- EDIT ----

@@ -1,6 +1,6 @@
 from django import forms
 
-from questlines.models import Quest, Questline
+from questlines.models import ChecklistObjective, Quest, Questline, SliderObjective
 
 
 class CreateQuestlineForm(forms.ModelForm):
@@ -28,6 +28,7 @@ class QuestForm(forms.ModelForm):
     class Meta:
         model = Quest
         fields = ["title", "description", "is_optional", "prerequisite_quests"]
+        # Widgets changes how a field is drawn as HTML
         widgets = {"prerequisite_quests": forms.CheckboxSelectMultiple}
 
     # questline_pk is keyword-only (it sits after *args) so it never reaches super(),
@@ -55,3 +56,16 @@ class MoveQuestForm(forms.ModelForm):
     class Meta:
         model = Quest
         fields = ["coord_x", "coord_y"]
+
+
+# Validating objectives
+class ChecklistObjectiveForm(forms.ModelForm):
+    class Meta:
+        model = ChecklistObjective
+        fields = ["title", "description"]
+
+
+class SliderObjectiveForm(forms.ModelForm):
+    class Meta:
+        model = SliderObjective
+        fields = ["title", "description", "min_value", "goal_value"]

@@ -102,6 +102,7 @@
               <span>TITLE</span>
               <input type="text" data-field="title" placeholder="What must be done?">
             </label>
+            <div data-row-errors-for="title"></div>
             <details class="objective-detail" open>
               <summary>DETAIL — INSTRUCTIONS</summary>
               <textarea data-field="description"
@@ -122,6 +123,7 @@
               <span>TITLE</span>
               <input type="text" data-field="title" placeholder="What must be tracked?">
             </label>
+            <div data-row-errors-for="title"></div>
             <details class="objective-detail" open>
               <summary>DETAIL — INSTRUCTIONS</summary>
               <textarea data-field="description"
@@ -137,6 +139,8 @@
                 <input type="number" data-field="goal_value" value="100">
               </label>
             </div>
+            <div data-row-errors-for="min_value"></div>
+            <div data-row-errors-for="goal_value"></div>
           </div>
         </template>
         {% comment %}

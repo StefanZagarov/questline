@@ -186,6 +186,7 @@ class CreateQuestView(LoginRequiredMixin, ObjectiveSaveMixin, views.CreateView):
     form_class = QuestForm
     template_name = "questlines/quest-create.html"
 
+    @transaction.atomic
     def form_valid(self, form):
         # author=... is the authorisation check: exists AND belongs to this user.
         questline = get_object_or_404(
@@ -193,9 +194,14 @@ class CreateQuestView(LoginRequiredMixin, ObjectiveSaveMixin, views.CreateView):
         )
         form.instance.questline = questline  # FK wants an instance, not a pk
 
+        # We first validate the objectives, we return either an error if a field is invalid, and stop the saving, or continue with saving the quest and objectives if there are no errors
+        objectives, errors = self.validate_objectives()
+        if errors:
+            return JsonResponse({"objective_errors": errors}, status=400)
+
         # Not super().form_valid() — that saves AND redirects; we only want the save.
         self.object = form.save()  # ModelForm.save() writes the M2M rows too
-        self.save_objectives(self.object)
+        self.save_objectives(self.object, objectives)
 
         # The reply the view sends back to a JS fetch() call when a quest is created — because this endpoint is hit by AJAX, not a normal form POST. (currently the returned body is thrown away from JS since the page reloads when the 201 is received)
         return JsonResponse(
@@ -235,9 +241,16 @@ class EditQuestView(LoginRequiredMixin, ObjectiveSaveMixin, views.UpdateView):
         kwargs["questline_pk"] = self.object.questline_id
         return kwargs
 
+    @transaction.atomic()
     def form_valid(self, form):
+        # We first validate the objectives, we return either an error if a field is invalid, and stop the saving, or continue with saving the quest and objectives if there are no errors
+        objectives, errors = self.validate_objectives()
+        if errors:
+            return JsonResponse({"objective_errors": errors}, status=400)
+
+        # Not super().form_valid() — that saves AND redirects; we only want the save.
         self.object = form.save()  # UpdateView already attached the instance
-        self.save_objectives(self.object)
+        self.save_objectives(self.object, objectives)
 
         return JsonResponse(
             {
