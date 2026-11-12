@@ -41,7 +41,12 @@ export function createQuestStates(questSeeds) {
   return questStates;
 }
 
-export function applyObjectivePreview(questStates, questId, objectiveId, value) {
+export function applyObjectivePreview(
+  questStates,
+  questId,
+  objectiveId,
+  value,
+) {
   updateObjectiveValue(questStates[questId].objectives[objectiveId], value);
   applyQuestPreview(questStates, questId);
 }
@@ -186,9 +191,6 @@ function arePrerequisitesDone(questStates, questState) {
   return questState.prerequisiteIds.every((prerequisiteId) => {
     const prerequisite = questStates[prerequisiteId];
 
-    // A required Quest never waits on an optional prerequisite
-    if (!questState.isOptional && prerequisite.isOptional) return true;
-
     return prerequisite.isDone;
   });
 }
@@ -197,7 +199,8 @@ function isQuestComplete(questState) {
   const objectives = Object.values(questState.objectives);
 
   return (
-    objectives.length > 0 && objectives.every((objective) => objective.isComplete)
+    objectives.length > 0 &&
+    objectives.every((objective) => objective.isComplete)
   );
 }
 

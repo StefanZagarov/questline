@@ -54,18 +54,19 @@ drawer.addEventListener("click", (event) => {
   if (event.target === drawer) drawer.close();
 });
 
+form.elements.is_optional.addEventListener("change", () => {
+  filterPrerequisiteList();
+});
+
 // Resets the drawer to a known state, then opens it. Prefill must come after.
 function openDrawer(action, text) {
   form.reset(); // back to the HTML's default values, i.e. blank
   objectivesList.replaceChildren(); // Cloned rows aren't form fields; reset from the line above won't remove them
   clearErrors();
   form.action = action; // decides create vs edit
+  form.dataset.formQuestId = "";
 
-  form
-    .querySelectorAll('input[name="prerequisite_quests"]')
-    .forEach((input) => {
-      input.closest("label").hidden = false;
-    });
+  filterPrerequisiteList();
 
   crumb.textContent = text.crumb;
   title.textContent = text.title;
@@ -73,6 +74,30 @@ function openDrawer(action, text) {
   submit.textContent = text.submit;
 
   drawer.showModal(); // showModal, not show — backdrop, focus trap, Esc
+}
+
+function filterPrerequisiteList() {
+  const thisQuestIsOptional = form.elements.is_optional.checked;
+
+  form
+    .querySelectorAll('input[name="prerequisite_quests"]')
+    .forEach((input) => {
+      // Check each quest if it's optional, then hide it for this quest, if the quest itself is non-optional
+      const otherQuest = document.querySelector(
+        `[data-quest-id="${input.value}"]`,
+      );
+      const otherQuestIsOptional =
+        otherQuest.querySelector("[data-optional]").dataset.optional === "1";
+
+      if (
+        (!thisQuestIsOptional && otherQuestIsOptional) ||
+        input.value === form.dataset.formQuestId
+      ) {
+        input.closest("label").hidden = true;
+      } else {
+        input.closest("label").hidden = false;
+      }
+    });
 }
 
 // ---- ERRORS ----
@@ -143,6 +168,11 @@ form.addEventListener("submit", async (event) => {
   event.preventDefault(); // stop the browser's full-page POST
   clearErrors();
 
+  // If the quest is non-optional, but has ticked optional quests as prerequisites, remove the optional quests as prerequisite by unticking them. Side effect: it unticks itself every time. Harmless, acts as additional security against selecting itself
+  form.querySelectorAll("label[hidden]").forEach((label) => {
+    label.querySelector("input").checked = false;
+  });
+
   // Objectives data assignment to the form
   // A NodeList of every drafted row
   const rowsData = objectivesList.querySelectorAll(".objective-row");
@@ -161,7 +191,6 @@ form.addEventListener("submit", async (event) => {
 
   const objectivesString = JSON.stringify(objectivesArray);
   objectivesData.value = objectivesString;
-  console.log(objectivesData.value);
 
   // FormData reads the form's current state, csrfmiddlewaretoken included —
   // that's why no CSRF header here. form.action is whatever opened the drawer.
@@ -197,6 +226,7 @@ document.querySelectorAll("[data-edit-quest]").forEach((button) => {
     const ids = group.dataset.prerequisites.split(",");
 
     openDrawer(editUrl, EDIT_TEXT); // resets, so prefill goes after
+    form.dataset.formQuestId = questId;
 
     const objectives = JSON.parse(button.dataset.objectives);
     // This is the packer run backwards
@@ -216,12 +246,11 @@ document.querySelectorAll("[data-edit-quest]").forEach((button) => {
     form.elements.description.value = button.dataset.description;
     form.elements.is_optional.checked = button.dataset.optional === "1"; // dataset is always strings
 
-    // Checkboxes share a name, not a value — selection lives per input.
+    filterPrerequisiteList();
     form
       .querySelectorAll('input[name="prerequisite_quests"]')
       .forEach((input) => {
         const isSelf = input.value === questId; // a quest can't require itself
-        input.closest("label").hidden = isSelf; // hide the row, not just the box
         input.checked = !isSelf && ids.includes(input.value); // false clears the last quest's picks
       });
   });

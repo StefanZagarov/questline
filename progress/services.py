@@ -136,9 +136,6 @@ def get_quest_state(
     prerequisite_quests = quest.prerequisite_quests.all()
     if prerequisite_quests:
         for prev_quest in prerequisite_quests:
-            # If the quest is a main quest, and the previous quest is optional, then do not block the main quest's progress
-            if not quest.is_optional and prev_quest.is_optional:
-                continue
             # The loaded twin of prev_quest, so the call below reads cached relations.
             if not get_quest_state(
                 quests_by_id[prev_quest.id],

@@ -602,6 +602,10 @@
 #id_prerequisite_quests input[type="checkbox"]:checked::before {
   content: "✓";
 }
+#id_prerequisite_quests label[hidden] {
+  display: none;
+}
+
 .drawer-field textarea {
   min-height: 96px;
   resize: vertical; /* free vertical growth; sideways would break the drawer */
