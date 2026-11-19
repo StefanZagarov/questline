@@ -397,3 +397,50 @@ a.brand-row:focus-visible {
     transform: rotate(45deg);
   }
 }
+
+.error-box {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-auto-flow: row dense;
+  align-items: center;
+  gap: 8px 12px;
+  width: calc(100% - 56px);
+  max-width: 1084px;
+  margin: 24px auto 0;
+  padding: 12px 14px;
+  border: 3px solid #a1341f;
+  background: rgba(161, 52, 31, 0.08);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+.error-box:not(:has(.error-message)) {
+  display: none;
+}
+.error-box-title {
+  grid-column: 1 / -1;
+  margin: 0 0 4px;
+  padding-bottom: 8px;
+  border-bottom: 2px dashed rgba(161, 52, 31, 0.4);
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 18px;
+  letter-spacing: 1px;
+  color: var(--ink-dark);
+}
+.error-message {
+  grid-column: 2;
+  margin: 0;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 16px;
+  letter-spacing: 1px;
+  color: #a1341f;
+}
+.message-tag {
+  grid-column: 1;
+  margin: 0;
+  padding: 4px 8px;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--paper);
+  background: #a1341f;
+}

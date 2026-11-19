@@ -1,7 +1,7 @@
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 from django.http import JsonResponse
-from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.views import generic as views
@@ -132,7 +132,7 @@ class UpdateQuestlineStatusView(LoginRequiredMixin, views.UpdateView):
     model = Questline
     form_class = QuestlineStatusForm
     success_url = reverse_lazy("home")
-    # Accept only POST requests, all others will make it return 400
+    # Accept only POST requests, all others will make it return 405 (Method Not Allowed)
     http_method_names = ["post"]
 
     def get_queryset(self):
@@ -140,7 +140,15 @@ class UpdateQuestlineStatusView(LoginRequiredMixin, views.UpdateView):
 
     # We need the form as parameter so under the hood Django can wire it: self.form_invalid(form)
     def form_invalid(self, form):
-        return HttpResponse(status=400)
+        list_of_errors = form.errors.as_data()
+        for error in list_of_errors.get("__all__", []):
+            messages.error(
+                # the `or ""` is there just to stop the linter from complaining, we never send None
+                self.request,
+                error.message or "",
+                extra_tags=error.code or "",
+            )
+        return redirect("home")
 
 
 class DeleteQuestlineView(LoginRequiredMixin, views.DeleteView):

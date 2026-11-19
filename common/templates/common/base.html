@@ -1,4 +1,5 @@
 {% load static %}
+{% load text_extras %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -50,6 +51,15 @@
       </header>
     {% endblock %}
     <main>
+      <div class="error-box">
+        {% if messages %}
+          <p class="error-box-title">The Adventure Guild does not approve:</p>
+          {% for message in messages %}
+            <p class="error-message">{{ message }}</p>
+            <p class="message-tag">{{ message.extra_tags|transform_underscore }}</p>
+          {% endfor %}
+        {% endif %}
+      </div>
       {% block content %}{% endblock %}
     </main>
   </body>

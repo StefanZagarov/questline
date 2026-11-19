@@ -1,6 +1,9 @@
 from django import forms
 
 from questlines.models import ChecklistObjective, Quest, Questline, SliderObjective
+from questlines.validation import (
+    validate_questline,
+)
 
 
 class CreateQuestlineForm(forms.ModelForm):
@@ -20,6 +23,32 @@ class QuestlineStatusForm(forms.ModelForm):
     class Meta:
         model = Questline
         fields = ["status"]
+
+    def clean(self):
+        # * Good to do this to keep the logic of the parent clean() method
+        cleaned_data = super().clean()
+        current_status = self.instance.status
+        # Return None if the selected questline status is different from what the UI
+        # provides: Draft, Private, Public. This way the validation conditional can catch
+        # this invalid value and skip the whole validation, as the status field's own
+        # check (run before clean()) has already caught it and added an error
+        requested_status = cleaned_data.get("status", None)
+
+        if (
+            requested_status is not None
+            and current_status == Questline.Status.DRAFT
+            and requested_status != Questline.Status.DRAFT
+        ):
+            errors = validate_questline(self.instance)
+            if errors:
+                validation_errors = [
+                    forms.ValidationError(error["message"], error["error_type"])
+                    for error in errors
+                ]
+                raise forms.ValidationError(validation_errors)  # type: ignore[arg-type]
+
+        # *
+        return cleaned_data
 
 
 # Serves both create and edit — a ModelForm doesn't know the difference; it just
