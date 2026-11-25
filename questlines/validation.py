@@ -8,8 +8,8 @@
 
 def fetchQuests(questline):
     quests = questline.quests.all()
-    quests_with_objectives = quests.prefetch_related("objectives")
-    return quests_with_objectives
+    quests_full_data = quests.prefetch_related("objectives", "prerequisite_quests")
+    return quests_full_data
 
 
 # Entry validator
@@ -19,7 +19,7 @@ def validate_questline(questline):
     errors = []
 
     errors += validate_quest_objectives(quests)
-    validate_single_root(quests)
+    errors += validate_single_root(questline, quests)
     validate_required_prerequisites(quests)
     validate_reachability(quests)
     validate_no_loops(quests)
@@ -34,7 +34,7 @@ def validate_questline(questline):
 def validate_quest_objectives(quests):
     objectives_error = [
         {
-            "quest_id": quest.id,
+            "quest_ids": [quest.id],
             "error_type": "no_objective",
             "message": f"{quest.title} does not have an objective",
         }
@@ -49,8 +49,49 @@ def validate_quest_objectives(quests):
 #    A root is not assigned anywhere — any Quest with no prerequisites is one, so count them.
 #    How: rule 1 already guarantees a required Quest exists; then check that exactly one
 #    Quest has no prerequisites, and that this Quest is required.
-def validate_single_root(quests):
-    pass
+def validate_single_root(questline, quests):
+    if len(quests) == 0:
+        return [
+            {
+                "quest_ids": [],
+                "error_type": "no_quest",
+                "message": f"{questline.title} has no quest",
+            }
+        ]
+
+    root_quest = [quest for quest in quests if not quest.prerequisite_quests.all()]
+    optional_root_quest = [root for root in root_quest if root.is_optional]
+
+    if len(root_quest) == 0:
+        return [
+            {
+                "quest_ids": [],
+                "error_type": "no_root",
+                "message": f"{questline.title} needs a root quest",
+            }
+        ]
+
+    error = []
+
+    if len(root_quest) > 1:
+        error.append(
+            {
+                "quest_ids": [quest.id for quest in root_quest],
+                "error_type": "multiple_roots",
+                "message": "More than one root quest",
+            }
+        )
+
+    if len(optional_root_quest) > 0:
+        error.append(
+            {
+                "quest_ids": [quest.id for quest in optional_root_quest],
+                "error_type": "optional_root_quest",
+                "message": "Quest can't be optional if it's a root quest",
+            }
+        )
+
+    return error
 
 
 # 4. A required Quest may only have required prerequisites (decided 2026-11-11).
