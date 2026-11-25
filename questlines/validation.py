@@ -20,7 +20,7 @@ def validate_questline(questline):
 
     errors += validate_quest_objectives(quests)
     errors += validate_single_root(questline, quests)
-    validate_required_prerequisites(quests)
+    errors += validate_required_prerequisites(quests)
     validate_reachability(quests)
     validate_no_loops(quests)
 
@@ -71,10 +71,10 @@ def validate_single_root(questline, quests):
             }
         ]
 
-    error = []
+    errors = []
 
     if len(root_quest) > 1:
-        error.append(
+        errors.append(
             {
                 "quest_ids": [quest.id for quest in root_quest],
                 "error_type": "multiple_roots",
@@ -83,7 +83,7 @@ def validate_single_root(questline, quests):
         )
 
     if len(optional_root_quest) > 0:
-        error.append(
+        errors.append(
             {
                 "quest_ids": [quest.id for quest in optional_root_quest],
                 "error_type": "optional_root_quest",
@@ -91,7 +91,7 @@ def validate_single_root(questline, quests):
             }
         )
 
-    return error
+    return errors
 
 
 # 4. A required Quest may only have required prerequisites (decided 2026-11-11).
@@ -101,7 +101,25 @@ def validate_single_root(questline, quests):
 #    How: for each required Quest that is not the root, check it has a prerequisite and
 #    that none of its prerequisites is optional.
 def validate_required_prerequisites(quests):
-    pass
+    errors = []
+
+    for quest in quests:
+        if quest.is_optional or len(quest.prerequisite_quests.all()) == 0:
+            continue
+
+        prerequisites = quest.prerequisite_quests.all()
+
+        for prerequisite in prerequisites:
+            if prerequisite.is_optional:
+                errors.append(
+                    {
+                        "quest_ids": [quest.id, prerequisite.id],
+                        "error_type": "optional_prerequisite",
+                        "message": f"{quest.title} is required, but its prerequisite {prerequisite.title} is optional",
+                    }
+                )
+
+    return errors
 
 
 # 5. Every Quest, optional ones included, is reachable from the root through
