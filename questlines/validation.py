@@ -6,31 +6,34 @@
 # Some problems belong to the whole map, not to one Quest (rules 1 and 3).
 
 
-def fetchQuests(questline):
+def fetch_quests(questline):
     quests = questline.quests.all()
     quests_full_data = quests.prefetch_related("objectives", "prerequisite_quests")
     return quests_full_data
 
 
+def get_root_quests(quests):
+    return [quest for quest in quests if not quest.prerequisite_quests.all()]
+
+
 # Entry validator
 def validate_questline(questline):
-    quests = fetchQuests(questline)
+    quests = fetch_quests(questline)
+    prerequisite_dict = {quest.id: quest.prerequisite_quests.all() for quest in quests}
 
     errors = []
+    root_quests = get_root_quests(quests)
 
     errors += validate_quest_objectives(quests)
-    errors += validate_single_root(questline, quests)
+    errors += validate_single_root(questline, root_quests, quests)
     errors += validate_required_prerequisites(quests)
-    validate_reachability(quests)
-    validate_no_loops(quests)
+    if len(root_quests) == 1:
+        errors += validate_reachability(quests, root_quests, prerequisite_dict)
+    errors += validate_no_loops(quests, prerequisite_dict)
 
     return errors
 
 
-# 2. Every Quest, required or optional, has at least one Objective — otherwise nothing can
-#    complete it. Each Quest with zero Objectives is faulty.
-#    How: go through every Quest and check its Objectives; a Quest with 0 goes into the
-#    faulty collection.
 def validate_quest_objectives(quests):
     objectives_error = [
         {
@@ -45,11 +48,7 @@ def validate_quest_objectives(quests):
     return objectives_error
 
 
-# 3. Exactly one root: one Quest without prerequisites, and it must be required.
-#    A root is not assigned anywhere — any Quest with no prerequisites is one, so count them.
-#    How: rule 1 already guarantees a required Quest exists; then check that exactly one
-#    Quest has no prerequisites, and that this Quest is required.
-def validate_single_root(questline, quests):
+def validate_single_root(questline, root_quests, quests):
     if len(quests) == 0:
         return [
             {
@@ -59,10 +58,9 @@ def validate_single_root(questline, quests):
             }
         ]
 
-    root_quest = [quest for quest in quests if not quest.prerequisite_quests.all()]
-    optional_root_quest = [root for root in root_quest if root.is_optional]
+    optional_root_quest = [root for root in root_quests if root.is_optional]
 
-    if len(root_quest) == 0:
+    if len(root_quests) == 0:
         return [
             {
                 "quest_ids": [],
@@ -73,10 +71,10 @@ def validate_single_root(questline, quests):
 
     errors = []
 
-    if len(root_quest) > 1:
+    if len(root_quests) > 1:
         errors.append(
             {
-                "quest_ids": [quest.id for quest in root_quest],
+                "quest_ids": [quest.id for quest in root_quests],
                 "error_type": "multiple_roots",
                 "message": "More than one root quest",
             }
@@ -94,12 +92,6 @@ def validate_single_root(questline, quests):
     return errors
 
 
-# 4. A required Quest may only have required prerequisites (decided 2026-11-11).
-#    Optional Quests may have any prerequisites. A required non-root Quest needs at least
-#    one prerequisite, and all of them must be required: R → (o)O → A and R → A ← (o)O
-#    are both invalid. Optional Quests branch off the main path, never into it.
-#    How: for each required Quest that is not the root, check it has a prerequisite and
-#    that none of its prerequisites is optional.
 def validate_required_prerequisites(quests):
     errors = []
 
@@ -122,15 +114,108 @@ def validate_required_prerequisites(quests):
     return errors
 
 
-# 5. Every Quest, optional ones included, is reachable from the root through
-#    prerequisites. No floating Quests or disconnected branches.
-#    How: a pure graph check — every Quest must connect back to the root.
-def validate_reachability(quests):
-    pass
+def validate_reachability(quests, root_quests, prerequisite_dict):
+    root_id = root_quests[0].id
+    visiting = set()
+    quests_to_root = set()
+
+    unreachable_quests = [
+        quest
+        for quest in quests
+        if not reaches_root(
+            quest.id, root_id, prerequisite_dict, visiting, quests_to_root
+        )
+    ]
+
+    if not unreachable_quests:
+        return []
+
+    unreachable_titles = ", ".join(quest.title for quest in unreachable_quests)
+
+    return [
+        {
+            "quest_ids": [quest.id for quest in unreachable_quests],
+            "error_type": "unreachable_quest",
+            "message": f"Not connected to the root quest: {unreachable_titles}",
+        }
+    ]
 
 
-# 6. No loops, direct or transitive. The validator owns this check; the loop detection in
-#    progress/services.py stays as a defensive fallback for bad data.
-#    How: a pure graph check, written here in the validator.
-def validate_no_loops(quests):
-    pass
+def reaches_root(quest_id, root_id, prerequisite_dict, visiting, quests_to_root):
+    if quest_id == root_id or quest_id in quests_to_root:
+        return True
+
+    if quest_id in visiting:
+        return False
+
+    visiting.add(quest_id)
+
+    found_root = any(
+        reaches_root(
+            prerequisite.id, root_id, prerequisite_dict, visiting, quests_to_root
+        )
+        for prerequisite in prerequisite_dict.get(quest_id, [])
+    )
+
+    visiting.remove(quest_id)
+
+    if found_root:
+        quests_to_root.add(quest_id)
+
+    return found_root
+
+
+def validate_no_loops(quests, prerequisite_dict):
+    visiting = []
+    valid_quests = set()
+    looping_quest_ids = set()
+
+    for quest in quests:
+        quest_loops(
+            quest.id, prerequisite_dict, visiting, valid_quests, looping_quest_ids
+        )
+
+    if not looping_quest_ids:
+        return []
+
+    looping_quests = [quest for quest in quests if quest.id in looping_quest_ids]
+    looping_quest_titles = ", ".join(quest.title for quest in looping_quests)
+
+    return [
+        {
+            "quest_ids": [quest.id for quest in looping_quests],
+            "error_type": "quest_loop",
+            "message": f"Quests have looping path: {looping_quest_titles}",
+        }
+    ]
+
+
+def quest_loops(quest_id, prerequisite_dict, visiting, valid_quests, looping_quest_ids):
+    if quest_id in looping_quest_ids:
+        return True
+    elif quest_id in visiting:
+        loop_start = visiting.index(quest_id)
+        looping_quest_ids.update(visiting[loop_start:])
+        return True
+    elif quest_id in valid_quests:
+        return False
+
+    visiting.append(quest_id)
+
+    found_loop = any(
+        quest_loops(
+            prerequisite.id,
+            prerequisite_dict,
+            visiting,
+            valid_quests,
+            looping_quest_ids,
+        )
+        for prerequisite in prerequisite_dict.get(quest_id, [])
+    )
+
+    visiting.pop(quest_id)
+
+    if not found_loop:
+        valid_quests.add(quest_id)
+
+    return found_loop
