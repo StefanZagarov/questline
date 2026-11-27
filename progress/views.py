@@ -1,5 +1,6 @@
 import json
 
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 from django.http.response import JsonResponse
@@ -10,6 +11,7 @@ from django.views import generic as views
 from progress.models import AdventureNote, Enrollment, ObjectiveProgress
 from progress.services import get_questline_progress
 from questlines.models import Objective, Quest, Questline
+from questlines.validation import validate_questline
 
 
 class AdventureView(LoginRequiredMixin, views.DetailView):
@@ -105,6 +107,21 @@ class StartAdventureView(LoginRequiredMixin, views.View):
         )
         # 3. Resolve the requested eligible Questline or return 404.
         questline = get_object_or_404(eligible_questlines, pk=pk)
+
+        # Backup guard - in case questlines somehow avoid the guard from Draft to Private/Public, check whether non-started quests are valid
+        is_started = Enrollment.objects.filter(
+            enrolled_user=request.user, questline=questline
+        ).exists()
+
+        if not is_started:
+            questline_errors = validate_questline(questline)
+            if questline_errors:
+                for error in questline_errors:
+                    messages.error(
+                        self.request, error["message"], extra_tags=error["error_type"]
+                    )
+
+                return redirect("home")
 
         # 4. Reuse an existing run or create the user's first Enrollment.
         enrollment, created = Enrollment.objects.get_or_create(
