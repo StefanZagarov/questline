@@ -213,7 +213,7 @@ def quest_loops(quest_id, prerequisite_dict, visiting, valid_quests, looping_que
         for prerequisite in prerequisite_dict.get(quest_id, [])
     )
 
-    visiting.pop(quest_id)
+    visiting.pop()
 
     if not found_loop:
         valid_quests.add(quest_id)
