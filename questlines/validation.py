@@ -39,7 +39,7 @@ def validate_quest_objectives(quests):
         {
             "quest_ids": [quest.id],
             "error_type": "no_objective",
-            "message": f"{quest.title} does not have an objective",
+            "message": f'"{quest.title}" does not have an objective',
         }
         for quest in quests
         if not quest.objectives.all()
@@ -54,7 +54,7 @@ def validate_single_root(questline, root_quests, quests):
             {
                 "quest_ids": [],
                 "error_type": "no_quest",
-                "message": f"{questline.title} has no quest",
+                "message": f'"{questline.title}" has no quest',
             }
         ]
 
@@ -65,7 +65,7 @@ def validate_single_root(questline, root_quests, quests):
             {
                 "quest_ids": [],
                 "error_type": "no_root",
-                "message": f"{questline.title} needs a root quest",
+                "message": f'"{questline.title}" needs a root quest',
             }
         ]
 
@@ -107,7 +107,11 @@ def validate_required_prerequisites(quests):
                     {
                         "quest_ids": [quest.id, prerequisite.id],
                         "error_type": "optional_prerequisite",
-                        "message": f"{quest.title} is required, but its prerequisite {prerequisite.title} is optional",
+                        "message": (
+                            f'Required quest "{quest.title}" depends on optional '
+                            f'quest "{prerequisite.title}". Required quests can only '
+                            "depend on required quests"
+                        ),
                     }
                 )
 
@@ -130,7 +134,7 @@ def validate_reachability(quests, root_quests, prerequisite_dict):
     if not unreachable_quests:
         return []
 
-    unreachable_titles = ", ".join(quest.title for quest in unreachable_quests)
+    unreachable_titles = ", ".join(f'"{quest.title}"' for quest in unreachable_quests)
 
     return [
         {
@@ -179,7 +183,7 @@ def validate_no_loops(quests, prerequisite_dict):
         return []
 
     looping_quests = [quest for quest in quests if quest.id in looping_quest_ids]
-    looping_quest_titles = ", ".join(quest.title for quest in looping_quests)
+    looping_quest_titles = ", ".join(f'"{quest.title}"' for quest in looping_quests)
 
     return [
         {
